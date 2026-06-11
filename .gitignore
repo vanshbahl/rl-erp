@@ -16,3 +16,5 @@ frontend/.next/
 
 # VS Code
 .vscode/
+
+.env
