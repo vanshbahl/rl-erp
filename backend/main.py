@@ -7,6 +7,9 @@ from app.routes.auth import router as auth_router
 from app.routes.user import router as user_router
 from app.routes import customer
 from app.models.customer import Customer
+from app.routes import product
+
+
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -14,6 +17,7 @@ app = FastAPI()
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(customer.router)
+app.include_router(product.router)
 
 @app.get("/")
 def root():
