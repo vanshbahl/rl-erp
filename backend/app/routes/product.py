@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.dependencies.auth import require_roles
 from app.models.enums import UserRole
 from app.models.product import Product
+from app.models.inventory import Inventory
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate
 
@@ -39,6 +40,14 @@ def create_product(
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
+    inventory = Inventory(
+    product_id=new_product.id,
+    quantity=0,
+    minimum_stock=0
+    )
+
+    db.add(inventory)
+    db.commit()
 
     return new_product
 
