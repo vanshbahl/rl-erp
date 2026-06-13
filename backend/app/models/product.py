@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from app.core.database import Base
 from sqlalchemy import Float
 
@@ -18,3 +18,4 @@ class Product(Base):
     color = Column(String)
     unit = Column(String)
     description = Column(String)
+    is_active = Column(Boolean, default=True, nullable=False)

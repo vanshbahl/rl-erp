@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from app.core.database import Base
 
 class Customer(Base):
@@ -10,3 +10,8 @@ class Customer(Base):
     phone = Column(String)
     email = Column(String)
     gst_number = Column(String)
+    address = Column(String)
+    city = Column(String)
+    state = Column(String)
+    pincode = Column(String)
+    is_active = Column(Boolean, default=True, nullable=False)
