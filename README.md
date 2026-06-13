@@ -6,7 +6,7 @@ RL-ERP centralizes business operations into a single system, enabling organizati
 
 ---
 
-## 🚀 Overview
+## Overview
 
 Businesses often rely on spreadsheets and disconnected software tools to manage critical operations. RL-ERP aims to provide a unified platform that improves visibility, efficiency, and decision-making across departments.
 
@@ -22,7 +22,7 @@ Key goals:
 
 ---
 
-## ✨ Features
+## Features
 
 ### Inventory Management
 
@@ -72,7 +72,7 @@ Key goals:
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ```text
 Frontend (React + TypeScript)
@@ -86,7 +86,7 @@ Frontend (React + TypeScript)
 
 ---
 
-## 🛠 Technology Stack
+## Technology Stack
 
 ### Frontend
 
@@ -116,7 +116,7 @@ Frontend (React + TypeScript)
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 RL-ERP/
@@ -154,7 +154,7 @@ RL-ERP/
 
 ---
 
-## ⚙️ Local Development
+## Local Development
 
 ### Clone Repository
 
@@ -227,7 +227,7 @@ http://localhost:5173
 
 ---
 
-## 🔐 Roles & Permissions
+## Roles & Permissions
 
 ### Super Administrator
 
@@ -267,7 +267,7 @@ http://localhost:5173
 
 ---
 
-## 🗺 Roadmap
+## Roadmap
 
 ### Phase 1
 
@@ -303,7 +303,7 @@ http://localhost:5173
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run tests:
 
@@ -313,7 +313,7 @@ pytest
 
 ---
 
-## 📋 Development Standards
+## Development Standards
 
 ### Branch Naming
 
@@ -335,7 +335,7 @@ refactor: improve database structure
 
 ---
 
-## 🔮 Future Enhancements
+## Future Enhancements
 
 - Multi-company support
 - Multi-warehouse management
@@ -350,13 +350,13 @@ refactor: improve database structure
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 Vansh Bahl
 
 ---
 
-## 📄 License
+## License
 
 This project is currently under active development.
 
