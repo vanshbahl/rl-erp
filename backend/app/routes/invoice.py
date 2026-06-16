@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.dependencies.auth import require_roles
+from app.models.enums import UserRole
 from app.models.invoice import Invoice
 from app.models.invoice_item import InvoiceItem
 from app.models.order import Order
@@ -17,7 +19,16 @@ router = APIRouter(
 
 
 @router.post("/generate/{order_id}")
-def generate_invoice(order_id: int, db: Session = Depends(get_db)):
+def generate_invoice(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(
+        require_roles(
+            UserRole.ADMIN,
+            UserRole.MANAGER
+        )
+    )
+):
 
     order = (
         db.query(Order)
@@ -29,6 +40,14 @@ def generate_invoice(order_id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=404,
             detail="Order not found"
+        )
+
+    allowed_statuses = ["DISPATCHED", "COMPLETED"]
+
+    if order.status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail="Invoices can only be generated for dispatched or completed orders"
         )
 
     existing_invoice = (
@@ -121,7 +140,14 @@ def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
 def update_invoice_status(
     invoice_id: int,
     status_data: InvoiceStatusUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user=Depends(
+        require_roles(
+            UserRole.ADMIN,
+            UserRole.MANAGER
+            
+        )
+    )
 ):
 
     invoice = (
@@ -136,7 +162,35 @@ def update_invoice_status(
             detail="Invoice not found"
         )
 
-    invoice.status = status_data.status
+    current_status = invoice.status
+    new_status = status_data.status.upper()
+
+    allowed_transitions = {
+        "DRAFT": ["ISSUED", "CANCELLED"],
+        "ISSUED": ["PAID", "CANCELLED"],
+        "PAID": [],
+        "CANCELLED": []
+    }
+
+    if current_status not in allowed_transitions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown current invoice status: {current_status}"
+        )
+
+    if new_status == current_status:
+        raise HTTPException(
+            status_code=400,
+            detail="Invoice is already in that status"
+        )
+
+    if new_status not in allowed_transitions[current_status]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status transition from {current_status} to {new_status}"
+        )
+
+    invoice.status = new_status
 
     db.commit()
     db.refresh(invoice)

@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from jose import jwt
 
 from passlib.context import CryptContext
 
@@ -62,4 +61,3 @@ def verify_token(token: str):
 
     except JWTError:
         return None
-    
