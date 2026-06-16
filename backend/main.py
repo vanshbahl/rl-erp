@@ -11,6 +11,7 @@ from app.routes import customer
 from app.routes import product
 from app.routes import inventory
 from app.routes import order
+from app.routes import invoice
 
 Base.metadata.create_all(bind=engine)
 
@@ -23,8 +24,9 @@ app.include_router(customer.router)
 app.include_router(product.router)
 app.include_router(inventory.router)
 app.include_router(order.router)
+app.include_router(invoice.router)
 
 
-@app.get("/")
+@app.get("/Health")
 def root():
-    return {"message": "RL ERP Backend Running"}
+    return {"message": "TESTED: OK"}

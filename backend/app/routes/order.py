@@ -16,6 +16,7 @@ from app.models.order_item import OrderItem
 from app.models.customer import Customer
 from app.models.product import Product
 from app.models.inventory import Inventory
+from app.models.inventory_transaction import InventoryTransaction
 
 from app.models.order_status import OrderStatus
 
@@ -181,6 +182,8 @@ def update_order_status(
             detail="Order not found"
         )
 
+    previous_status = order.status
+
     if (
         order.status == "COMPLETED"
         and status_data.status.value != "COMPLETED"
@@ -190,55 +193,110 @@ def update_order_status(
             detail="Completed orders cannot be modified"
         )
 
-    if (
-        status_data.status.value == "DISPATCHED"
-        and order.status != "DISPATCHED"
-    ):
+    try:
 
-        order_items = (
-            db.query(OrderItem)
-            .filter(OrderItem.order_id == order.id)
-            .all()
-        )
+        if (
+            status_data.status.value == "DISPATCHED"
+            and previous_status != "DISPATCHED"
+        ):
 
-        for item in order_items:
-
-            inventory = (
-                db.query(Inventory)
-                .filter(
-                    Inventory.product_id == item.product_id
-                )
-                .first()
+            order_items = (
+                db.query(OrderItem)
+                .filter(OrderItem.order_id == order.id)
+                .all()
             )
 
-            if not inventory:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Inventory not found for product {item.product_id}"
+            for item in order_items:
+
+                inventory = (
+                    db.query(Inventory)
+                    .filter(
+                        Inventory.product_id == item.product_id
+                    )
+                    .first()
                 )
 
-            if inventory.quantity < item.quantity:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Insufficient inventory for product {item.product_id}"
+                if not inventory:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Inventory not found for product {item.product_id}"
+                    )
+
+                if inventory.quantity < item.quantity:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Insufficient inventory for product {item.product_id}"
+                    )
+
+            for item in order_items:
+
+                inventory = (
+                    db.query(Inventory)
+                    .filter(
+                        Inventory.product_id == item.product_id
+                    )
+                    .first()
                 )
 
-        for item in order_items:
+                inventory.quantity -= item.quantity
 
-            inventory = (
-                db.query(Inventory)
-                .filter(
-                    Inventory.product_id == item.product_id
+                db.add(
+                    InventoryTransaction(
+                        product_id=item.product_id,
+                        order_id=order.id,
+                        quantity_change=-item.quantity,
+                        transaction_type="ORDER_DISPATCH",
+                        remarks=f"Order #{order.id} dispatched"
+                    )
                 )
-                .first()
+
+        elif (
+            status_data.status.value == "CANCELLED"
+            and previous_status == "DISPATCHED"
+        ):
+
+            order_items = (
+                db.query(OrderItem)
+                .filter(OrderItem.order_id == order.id)
+                .all()
             )
 
-            inventory.quantity -= item.quantity
+            for item in order_items:
 
-    order.status = status_data.status.value
+                inventory = (
+                    db.query(Inventory)
+                    .filter(
+                        Inventory.product_id == item.product_id
+                    )
+                    .first()
+                )
 
-    db.commit()
-    db.refresh(order)
+                if not inventory:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Inventory not found for product {item.product_id}"
+                    )
+
+                inventory.quantity += item.quantity
+
+                db.add(
+                    InventoryTransaction(
+                        product_id=item.product_id,
+                        order_id=order.id,
+                        quantity_change=item.quantity,
+                        transaction_type="ORDER_CANCEL",
+                        remarks=f"Order #{order.id} cancelled"
+                    )
+                )
+
+        order.status = status_data.status.value
+
+        db.commit()
+        db.refresh(order)
+
+    except Exception:
+        db.rollback()
+        raise
 
     return {
         "message": "Order status updated",
