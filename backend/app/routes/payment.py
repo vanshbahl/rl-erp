@@ -4,11 +4,13 @@ from sqlalchemy import func
 
 from app.core.database import get_db
 
+
 from app.dependencies.auth import require_roles
 from app.models.enums import UserRole
 
 from app.models.payment import Payment
 from app.models.invoice import Invoice
+from app.models.customer import Customer
 
 from app.schemas.payment import (
     PaymentCreate,
@@ -211,4 +213,128 @@ def get_invoice_payment_summary(
         "paid_amount": float(paid_amount),
         "outstanding_amount": outstanding_amount,
         "status": invoice.status
+    }
+
+@router.get("/customer/{customer_id}/summary")
+def get_customer_payment_summary(
+    customer_id: int,
+    db: Session = Depends(get_db)
+):
+
+    customer = (
+        db.query(Customer)
+        .filter(Customer.id == customer_id)
+        .first()
+    )
+
+    if not customer:
+        raise HTTPException(
+            status_code=404,
+            detail="Customer not found"
+        )
+
+    invoices = (
+        db.query(Invoice)
+        .filter(
+            Invoice.customer_id == customer_id
+        )
+        .all()
+    )
+
+    total_invoiced = sum(
+        float(invoice.total_amount)
+        for invoice in invoices
+    )
+
+    invoice_ids = [
+        invoice.id
+        for invoice in invoices
+    ]
+
+    paid_amount = (
+        db.query(
+            func.coalesce(
+                func.sum(Payment.amount),
+                0
+            )
+        )
+        .filter(
+            Payment.invoice_id.in_(invoice_ids)
+        )
+        .scalar()
+    )
+
+    outstanding_amount = (
+        total_invoiced
+        - float(paid_amount)
+    )
+
+    return {
+        "customer_id": customer.id,
+        "company_name": customer.company_name,
+        "total_invoiced": total_invoiced,
+        "total_paid": float(paid_amount),
+        "outstanding_amount": outstanding_amount
+    }
+
+@router.get("/customer/{customer_id}/invoices")
+def get_customer_invoices(
+    customer_id: int,
+    db: Session = Depends(get_db)
+):
+
+    customer = (
+        db.query(Customer)
+        .filter(Customer.id == customer_id)
+        .first()
+    )
+
+    if not customer:
+        raise HTTPException(
+            status_code=404,
+            detail="Customer not found"
+        )
+
+    invoices = (
+        db.query(Invoice)
+        .filter(Invoice.customer_id == customer_id)
+        .order_by(Invoice.created_at.desc())
+        .all()
+    )
+
+    result = []
+
+    for invoice in invoices:
+
+        paid_amount = (
+            db.query(
+                func.coalesce(
+                    func.sum(Payment.amount),
+                    0
+                )
+            )
+            .filter(
+                Payment.invoice_id == invoice.id
+            )
+            .scalar()
+        )
+
+        outstanding_amount = (
+            float(invoice.total_amount)
+            - float(paid_amount)
+        )
+
+        result.append({
+            "invoice_id": invoice.id,
+            "invoice_number": invoice.invoice_number,
+            "invoice_total": float(invoice.total_amount),
+            "paid_amount": float(paid_amount),
+            "outstanding_amount": outstanding_amount,
+            "status": invoice.status
+        })
+
+    return {
+        "customer_id": customer.id,
+        "company_name": customer.company_name,
+        "invoices": result
     }
