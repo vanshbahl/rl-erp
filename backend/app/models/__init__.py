@@ -7,3 +7,4 @@ from app.models.order_item import OrderItem
 from app.models.invoice import Invoice
 from app.models.invoice_item import InvoiceItem
 from app.models.inventory_transaction import InventoryTransaction
+from app.models.payment import Payment
