@@ -8,3 +8,6 @@ from app.models.invoice import Invoice
 from app.models.invoice_item import InvoiceItem
 from app.models.inventory_transaction import InventoryTransaction
 from app.models.payment import Payment
+from app.models.supplier import Supplier
+from app.models.purchase_order import PurchaseOrder
+from app.models.purchase_order_item import PurchaseOrderItem

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.core.database import Base, engine
+from app.core.database import Base
 
 import app.models
 
@@ -13,8 +13,8 @@ from app.routes import inventory
 from app.routes import order
 from app.routes import invoice
 from app.routes import payment
+from app.routes import supplier
 
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -27,7 +27,7 @@ app.include_router(inventory.router)
 app.include_router(order.router)
 app.include_router(invoice.router)
 app.include_router(payment.router)
-
+app.include_router(supplier.router)
 
 @app.get("/Health")
 def root():
