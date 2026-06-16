@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.core.database import get_db
 
@@ -72,6 +73,30 @@ def create_payment(
             detail=f"Payment method must be one of {allowed_methods}"
         )
 
+    already_paid = (
+        db.query(
+            func.coalesce(
+                func.sum(Payment.amount),
+                0
+            )
+        )
+        .filter(
+            Payment.invoice_id == invoice.id
+        )
+        .scalar()
+    )
+
+    remaining_balance = (
+        float(invoice.total_amount)
+        - float(already_paid)
+    )
+
+    if payment_data.amount > remaining_balance:
+        raise HTTPException(
+            status_code=400,
+            detail="Payment exceeds outstanding balance"
+        )
+
     payment = Payment(
         invoice_id=payment_data.invoice_id,
         amount=payment_data.amount,
@@ -81,6 +106,21 @@ def create_payment(
     )
 
     db.add(payment)
+
+    new_paid_amount = (
+        float(already_paid)
+        + float(payment_data.amount)
+    )
+
+    outstanding_balance = (
+        float(invoice.total_amount)
+        - new_paid_amount
+    )
+
+    if outstanding_balance <= 0:
+        invoice.status = "PAID"
+    else:
+        invoice.status = "PARTIALLY_PAID"
 
     db.commit()
     db.refresh(payment)
@@ -126,3 +166,49 @@ def get_payment(
         )
 
     return payment
+
+
+# New endpoint for invoice payment summary
+@router.get("/invoice/{invoice_id}/summary")
+def get_invoice_payment_summary(
+    invoice_id: int,
+    db: Session = Depends(get_db)
+):
+
+    invoice = (
+        db.query(Invoice)
+        .filter(Invoice.id == invoice_id)
+        .first()
+    )
+
+    if not invoice:
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found"
+        )
+
+    paid_amount = (
+        db.query(
+            func.coalesce(
+                func.sum(Payment.amount),
+                0
+            )
+        )
+        .filter(
+            Payment.invoice_id == invoice.id
+        )
+        .scalar()
+    )
+
+    outstanding_amount = (
+        float(invoice.total_amount)
+        - float(paid_amount)
+    )
+
+    return {
+        "invoice_id": invoice.id,
+        "invoice_total": float(invoice.total_amount),
+        "paid_amount": float(paid_amount),
+        "outstanding_amount": outstanding_amount,
+        "status": invoice.status
+    }
