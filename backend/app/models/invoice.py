@@ -60,3 +60,8 @@ class Invoice(Base):
         DateTime,
         default=datetime.utcnow,
     )
+
+    due_date = Column(
+        DateTime,
+        nullable=False,
+    )

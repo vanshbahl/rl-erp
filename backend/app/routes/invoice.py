@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -21,6 +21,7 @@ router = APIRouter(
 @router.post("/generate/{order_id}")
 def generate_invoice(
     order_id: int,
+    due_days: int = 30,
     db: Session = Depends(get_db),
     current_user=Depends(
         require_roles(
@@ -40,6 +41,11 @@ def generate_invoice(
         raise HTTPException(
             status_code=404,
             detail="Order not found"
+        )
+    if due_days <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Due days must be greater than zero"
         )
 
     allowed_statuses = ["DISPATCHED", "COMPLETED"]
@@ -71,7 +77,8 @@ def generate_invoice(
         subtotal=order.total_amount,
         tax_amount=0,
         total_amount=order.total_amount,
-        status="DRAFT"
+        status="DRAFT",
+        due_date=datetime.utcnow() + timedelta(days=due_days)
     )
 
     db.add(invoice)

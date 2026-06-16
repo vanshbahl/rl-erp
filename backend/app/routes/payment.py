@@ -12,6 +12,8 @@ from app.models.payment import Payment
 from app.models.invoice import Invoice
 from app.models.customer import Customer
 
+from datetime import datetime
+
 from app.schemas.payment import (
     PaymentCreate,
     PaymentResponse,
@@ -142,32 +144,6 @@ def get_payments(
         .order_by(Payment.created_at.desc())
         .all()
     )
-
-
-@router.get(
-    "/{payment_id}",
-    response_model=PaymentResponse
-)
-def get_payment(
-    payment_id: int,
-    db: Session = Depends(get_db)
-):
-
-    payment = (
-        db.query(Payment)
-        .filter(
-            Payment.id == payment_id
-        )
-        .first()
-    )
-
-    if not payment:
-        raise HTTPException(
-            status_code=404,
-            detail="Payment not found"
-        )
-
-    return payment
 
 
 # New endpoint for invoice payment summary
@@ -338,3 +314,180 @@ def get_customer_invoices(
         "company_name": customer.company_name,
         "invoices": result
     }
+
+@router.get("/outstanding")
+def get_outstanding_invoices(
+    db: Session = Depends(get_db)
+):
+
+    invoices = db.query(Invoice).all()
+
+    result = []
+
+    for invoice in invoices:
+
+        paid_amount = (
+            db.query(
+                func.coalesce(
+                    func.sum(Payment.amount),
+                    0
+                )
+            )
+            .filter(
+                Payment.invoice_id == invoice.id
+            )
+            .scalar()
+        )
+
+        outstanding_amount = (
+            float(invoice.total_amount)
+            - float(paid_amount)
+        )
+
+        if outstanding_amount <= 0:
+            continue
+
+        customer = (
+            db.query(Customer)
+            .filter(
+                Customer.id == invoice.customer_id
+            )
+            .first()
+        )
+
+        result.append({
+            "customer_id": customer.id,
+            "company_name": customer.company_name,
+            "invoice_id": invoice.id,
+            "invoice_number": invoice.invoice_number,
+            "invoice_total": float(invoice.total_amount),
+            "paid_amount": float(paid_amount),
+            "outstanding_amount": outstanding_amount,
+            "status": invoice.status
+        })
+
+    result.sort(
+        key=lambda x: x["outstanding_amount"],
+        reverse=True
+    )
+
+    return result
+
+
+@router.get("/aging-report")
+def get_aging_report(
+    db: Session = Depends(get_db)
+):
+
+    invoices = db.query(Invoice).all()
+
+    aging = {
+        "current": 0,
+        "0_30_days": 0,
+        "31_60_days": 0,
+        "61_90_days": 0,
+        "90_plus_days": 0
+    }
+
+    invoice_details = []
+
+    for invoice in invoices:
+
+        paid_amount = (
+            db.query(
+                func.coalesce(
+                    func.sum(Payment.amount),
+                    0
+                )
+            )
+            .filter(
+                Payment.invoice_id == invoice.id
+            )
+            .scalar()
+        )
+
+        outstanding_amount = (
+            float(invoice.total_amount)
+            - float(paid_amount)
+        )
+
+        if outstanding_amount <= 0:
+            continue
+
+        customer = (
+            db.query(Customer)
+            .filter(
+                Customer.id == invoice.customer_id
+            )
+            .first()
+        )
+
+        days_overdue = (
+            datetime.utcnow()
+            - invoice.due_date
+        ).days
+
+        if days_overdue < 0:
+
+            aging["current"] += outstanding_amount
+            bucket = "CURRENT"
+
+        elif days_overdue <= 30:
+
+            aging["0_30_days"] += outstanding_amount
+            bucket = "0-30 DAYS"
+
+        elif days_overdue <= 60:
+
+            aging["31_60_days"] += outstanding_amount
+            bucket = "31-60 DAYS"
+
+        elif days_overdue <= 90:
+
+            aging["61_90_days"] += outstanding_amount
+            bucket = "61-90 DAYS"
+
+        else:
+
+            aging["90_plus_days"] += outstanding_amount
+            bucket = "90+ DAYS"
+
+        invoice_details.append({
+            "customer_id": customer.id,
+            "company_name": customer.company_name,
+            "invoice_id": invoice.id,
+            "invoice_number": invoice.invoice_number,
+            "outstanding_amount": outstanding_amount,
+            "days_overdue": max(days_overdue, 0),
+            "bucket": bucket
+        })
+
+    return {
+        "summary": aging,
+        "invoices": invoice_details
+    }
+
+@router.get(
+    "/{payment_id}",
+    response_model=PaymentResponse
+)
+def get_payment(
+    payment_id: int,
+    db: Session = Depends(get_db)
+):
+
+    payment = (
+        db.query(Payment)
+        .filter(
+            Payment.id == payment_id
+        )
+        .first()
+    )
+
+    if not payment:
+        raise HTTPException(
+            status_code=404,
+            detail="Payment not found"
+        )
+
+    return payment
