@@ -29,6 +29,12 @@ class InventoryTransaction(Base):
         nullable=True,
     )
 
+    purchase_order_id = Column(
+        Integer,
+        ForeignKey("purchase_orders.id"),
+        nullable=True,
+    )
+
     quantity_change = Column(
         Float,
         nullable=False,

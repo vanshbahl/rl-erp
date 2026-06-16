@@ -6,17 +6,20 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 
 from app.dependencies.auth import require_roles
-from app.models.enums import UserRole
+from app.models.enums import UserRole, InventoryTransactionType
 
 from app.models.supplier import Supplier
 from app.models.product import Product
 from app.models.purchase_order import PurchaseOrder
 from app.models.purchase_order_item import PurchaseOrderItem
+from app.models.inventory import Inventory
+from app.models.inventory_transaction import InventoryTransaction
 
 from app.schemas.purchase_order import (
     PurchaseOrderCreate,
     PurchaseOrderResponse,
     PurchaseOrderStatusUpdate,
+    PurchaseOrderReceive,
 )
 
 
@@ -251,4 +254,127 @@ def update_purchase_order_status(
 
     return {
         "message": "Purchase order status updated successfully"
+    }
+
+
+# Endpoint to receive purchase orders and update inventory
+@router.post("/{purchase_order_id}/receive")
+def receive_purchase_order(
+    purchase_order_id: int,
+    receive_data: PurchaseOrderReceive,
+    db: Session = Depends(get_db)
+):
+
+    purchase_order = (
+        db.query(PurchaseOrder)
+        .filter(PurchaseOrder.id == purchase_order_id)
+        .first()
+    )
+
+    if not purchase_order:
+        raise HTTPException(
+            status_code=404,
+            detail="Purchase order not found"
+        )
+
+    if purchase_order.status == "CANCELLED":
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot receive a cancelled purchase order"
+        )
+
+    po_items = (
+        db.query(PurchaseOrderItem)
+        .filter(
+            PurchaseOrderItem.purchase_order_id == purchase_order.id
+        )
+        .all()
+    )
+
+    po_item_map = {
+        item.product_id: item
+        for item in po_items
+    }
+
+    for item in receive_data.items:
+
+        if item.product_id not in po_item_map:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Product {item.product_id} is not part of this purchase order"
+            )
+
+        po_item = po_item_map[item.product_id]
+
+        if item.received_quantity <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Received quantity must be greater than zero"
+            )
+
+        remaining_quantity = (
+            po_item.quantity
+            - po_item.received_quantity
+        )
+
+        if item.received_quantity > remaining_quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Cannot receive {item.received_quantity}. "
+                    f"Only {remaining_quantity} remaining for product {item.product_id}"
+                )
+            )
+
+        inventory = (
+            db.query(Inventory)
+            .filter(
+                Inventory.product_id == item.product_id
+            )
+            .first()
+        )
+
+        if not inventory:
+            inventory = Inventory(
+                product_id=item.product_id,
+                quantity=0,
+                minimum_stock=0
+            )
+            db.add(inventory)
+            db.flush()
+
+        inventory.quantity += item.received_quantity
+
+        po_item.received_quantity += item.received_quantity
+
+        transaction = InventoryTransaction(
+            product_id=item.product_id,
+            purchase_order_id=purchase_order.id,
+            quantity_change=item.received_quantity,
+            transaction_type=InventoryTransactionType.PURCHASE_RECEIPT.value,
+            remarks=f"PO Receipt - {purchase_order.po_number}"
+        )
+
+        db.add(transaction)
+
+    all_received = all(
+        item.received_quantity >= item.quantity
+        for item in po_items
+    )
+
+    any_received = any(
+        item.received_quantity > 0
+        for item in po_items
+    )
+
+    if all_received:
+        purchase_order.status = "RECEIVED"
+    elif any_received:
+        purchase_order.status = "PARTIALLY_RECEIVED"
+
+    db.commit()
+
+    return {
+        "message": "Purchase order received successfully",
+        "status": purchase_order.status
     }

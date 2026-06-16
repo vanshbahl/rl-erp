@@ -21,6 +21,7 @@ class PurchaseOrderItemResponse(BaseModel):
 
     product_id: int
     quantity: float
+    received_quantity: float
     rate: float
     amount: float
 
@@ -50,3 +51,11 @@ class PurchaseOrderResponse(BaseModel):
 
 class PurchaseOrderStatusUpdate(BaseModel):
     status: str
+
+class PurchaseOrderReceiveItem(BaseModel):
+    product_id: int
+    received_quantity: float
+
+
+class PurchaseOrderReceive(BaseModel):
+    items: list[PurchaseOrderReceiveItem]

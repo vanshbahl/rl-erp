@@ -30,6 +30,12 @@ class PurchaseOrderItem(Base):
 
     quantity = Column(Float)
 
+    received_quantity = Column(
+    Float,
+    default=0,
+    nullable=False
+    )
+
     rate = Column(Numeric(12, 2))
 
     amount = Column(Numeric(14, 2))

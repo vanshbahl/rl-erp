@@ -14,7 +14,7 @@ from app.routes import order
 from app.routes import invoice
 from app.routes import payment
 from app.routes import supplier
-
+from app.routes import purchase_order
 
 app = FastAPI()
 
@@ -28,6 +28,7 @@ app.include_router(order.router)
 app.include_router(invoice.router)
 app.include_router(payment.router)
 app.include_router(supplier.router)
+app.include_router(purchase_order.router)
 
 @app.get("/Health")
 def root():
