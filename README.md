@@ -361,3 +361,5 @@ Vansh Bahl
 This project is currently under active development.
 
 All rights reserved.
+
+made by Vansh Bahl
