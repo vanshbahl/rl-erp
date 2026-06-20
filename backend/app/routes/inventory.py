@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.dependencies.auth import require_roles
 from app.models.enums import UserRole
 from app.models.inventory import Inventory
+from app.models.product import Product
 from app.models.user import User
 from app.schemas.inventory import InventoryCreate, InventoryUpdate
 
@@ -26,6 +27,32 @@ def get_inventory(
     )
 ):
     return db.query(Inventory).all()
+
+
+@router.get("/low-stock")
+def get_low_stock(
+    product_type: str | None = None,
+    supplier_id: int | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(
+            UserRole.ADMIN,
+            UserRole.MANAGER,
+            UserRole.STAFF
+        )
+    )
+):
+    query = db.query(Inventory).join(Product, Inventory.product_id == Product.id)
+    
+    query = query.filter(Inventory.quantity <= Inventory.minimum_stock)
+    
+    if product_type:
+        query = query.filter(Product.product_type == product_type)
+        
+    if supplier_id:
+        query = query.filter(Product.default_supplier_id == supplier_id)
+        
+    return query.all()
 
 
 @router.get("/{product_id}")

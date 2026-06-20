@@ -20,11 +20,14 @@ The backend contains the following operational business modules:
    * Soft-deactivation status toggles (`is_active = False`).
 4. **Product Management (`app/routes/product.py`)**
    * CRUD operations for products.
+   * **Product Classification**: Classified products into one of five types (`RAW_MATERIAL`, `FINISHED_GOOD`, `SEMI_FINISHED`, `PACKAGING`, `CONSUMABLE`), with type-specific validation and database mapping.
+   * **Raw Material Foundation**: Added `standard_cost` tracking and `default_supplier_id` (default supplier link) metadata.
    * Auto-creation of a default inventory record (initial stock/minimum stock = 0) whenever a product is created.
    * Soft deactivation (`is_active = False`) and hard deletion capabilities.
 5. **Inventory Management (`app/routes/inventory.py`)**
    * Tracking inventory for finished goods.
    * Retrieving stock levels (all products or individual products).
+   * **Low-Stock Reporting**: Dedicated endpoint (`GET /inventory/low-stock`) returning records where current stock is below safety thresholds, supporting `product_type` and `supplier_id` filters.
    * Direct stock updates and record initialization.
 6. **Order Management & Fulfillment (`app/routes/order.py`)**
    * Multi-item order creation with total amount auto-calculation.

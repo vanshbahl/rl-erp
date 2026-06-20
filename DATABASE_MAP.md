@@ -38,6 +38,9 @@ Stores products (currently finished goods only).
   * `color` (`String`): Product color metadata. Nullable.
   * `unit` (`String`): Unit of measurement (e.g. KG, PCS, ROLLS). Nullable.
   * `description` (`String`): Detailed product description. Nullable.
+  * `product_type` (`String`): Classification category (`RAW_MATERIAL`, `FINISHED_GOOD`, `SEMI_FINISHED`, `PACKAGING`, `CONSUMABLE`). Defaults to `'FINISHED_GOOD'`. Required (Not Null).
+  * `standard_cost` (`Numeric(14, 2)`): Standard cost of the product. Defaults to `0.00`. Required (Not Null).
+  * `default_supplier_id` (`Integer`): Foreign Key referencing `suppliers.id`. Nullable.
   * `is_active` (`Boolean`): Status flag for soft deactivation. Defaults to `True`. Required (Not Null).
 * **Indexes & Constraints**:
   * Primary Key: `products_pkey` (`id`)
@@ -306,6 +309,8 @@ The database schema evolves through versioned migrations managed by Alembic. The
 | 4 | `f8851266edf1` | `aa0a97637be7` | `add_purchase_orders` | Empty script. |
 | 5 | `88df91a57c03` | `f8851266edf1` | `add_purchase_order_reference_to_inventory_transactions` | Adds column `purchase_order_id` to `inventory_transactions` referencing `purchase_orders.id`. |
 | 6 | `686fc3352513` | `88df91a57c03` | `add_received_quantity_to_purchase_order_items` | Adds column `received_quantity` to `purchase_order_items` (type: `Float`, default: `0`, non-nullable). |
+| 7 | `92a21ef01c92` | `686fc3352513` | `add_product_type_to_products` | Adds column `product_type` to `products`, backfills existing rows to `'FINISHED_GOOD'`, and alters it to be non-nullable. |
+| 8 | `c69c1886d559` | `92a21ef01c92` | `add_raw_material_fields_to_products` | Adds `standard_cost` and `default_supplier_id` to `products`, adds FK to `suppliers.id`, backfills cost to `0.00`, and alters it to be non-nullable. |
 
 > **Note on Migration Discrepancies:**
 > Table creation queries for `suppliers`, `purchase_orders`, and `purchase_order_items` are not explicitly written in the Alembic versions files. They were either initialized prior to the adoption of Alembic or synced out-of-band using SQLAlchemy's metadata creation engines.
