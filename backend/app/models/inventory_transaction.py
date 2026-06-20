@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
 )
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -47,8 +48,19 @@ class InventoryTransaction(Base):
 
     remarks = Column(String)
 
+    production_execution_id = Column(
+        Integer,
+        ForeignKey("production_executions.id"),
+        nullable=True,
+    )
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow,
         nullable=False,
+    )
+
+    production_execution = relationship(
+        "ProductionExecution",
+        back_populates="inventory_transactions",
     )
