@@ -11,3 +11,5 @@ from app.models.payment import Payment
 from app.models.supplier import Supplier
 from app.models.purchase_order import PurchaseOrder
 from app.models.purchase_order_item import PurchaseOrderItem
+from app.models.bom import BOM
+from app.models.bom_item import BOMItem

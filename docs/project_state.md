@@ -6,6 +6,7 @@
 - **Customer Management**: CRUD endpoints, soft-deactivate toggles.
 - **Product Management**: CRUD endpoints, default inventory mapping, Product Classification (`RAW_MATERIAL`, `FINISHED_GOOD`, `SEMI_FINISHED`, `PACKAGING`, `CONSUMABLE`), and Raw Material Foundation (`standard_cost`, `default_supplier_id`).
 - **Inventory Management**: Inventory tracking, adjustments, and low-stock alerting (`GET /inventory/low-stock`).
+- **Bill of Materials (BOM)**: Recipe management for Finished and Semi-Finished Goods, dynamic version tracking, active recipe lookups (`GET /boms/product/{product_id}`), and line-item duplicate prevention constraints.
 - **Order Management**: Order lifecycle, automatic finished goods inventory deduction on dispatch, transaction logs, cancellation rollback.
 - **Invoice Module**: Invoice generation from dispatched/completed orders, subtotal/total calculation.
 - **Payments Module**: Payments collection, balance summary, outstanding reports, aging report.
@@ -16,7 +17,6 @@
 - None (current development session completed).
 
 ## Next Priorities
-- **BOM System**: Defining raw material specifications for finished products.
 - **Production Module**: Manufacturing execution, consuming materials.
 - **Inventory Ledger**: Complete movement logs audit trails.
 

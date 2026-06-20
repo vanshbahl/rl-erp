@@ -274,6 +274,45 @@ Contains detailed line items for purchase orders.
 
 ---
 
+### Table: `boms`
+Stores Bill of Materials recipe headers.
+
+* **Columns**:
+  * `id` (`Integer`): Primary Key. Auto-incremented.
+  * `product_id` (`Integer`): Foreign Key referencing `products.id`. Required (Not Null).
+  * `version` (`Integer`): Recipe version number. Defaults to `1`. Required (Not Null).
+  * `is_active` (`Boolean`): Toggles active status. Defaults to `True`. Required (Not Null).
+  * `notes` (`String`): General notes. Nullable.
+  * `created_at` (`DateTime`): Timestamp. Defaults to UTC now. Required (Not Null).
+  * `updated_at` (`DateTime`): Update timestamp. Defaults to UTC now, auto-updates. Required (Not Null).
+* **Foreign Keys**:
+  * Foreign Key Constraint: `boms_product_id_fkey` (`product_id`) $\rightarrow$ `products`(`id`)
+* **Indexes & Constraints**:
+  * Primary Key: `boms_pkey` (`id`)
+  * Index: `ix_boms_id` (`id`)
+
+---
+
+### Table: `bom_items`
+Stores line items/ingredients for a Bill of Materials.
+
+* **Columns**:
+  * `id` (`Integer`): Primary Key. Auto-incremented.
+  * `bom_id` (`Integer`): Foreign Key referencing `boms.id` (cascade delete). Required (Not Null).
+  * `component_product_id` (`Integer`): Foreign Key referencing `products.id`. Required (Not Null).
+  * `quantity` (`Float`): Component quantity required. Required (Not Null).
+  * `unit_of_measure` (`String`): Snapshot of unit at recipe definition. Required (Not Null).
+  * `created_at` (`DateTime`): Creation timestamp. Defaults to UTC now. Required (Not Null).
+* **Foreign Keys**:
+  * Foreign Key Constraint: `bom_items_bom_id_fkey` (`bom_id`) $\rightarrow$ `boms`(`id`) (on delete cascade)
+  * Foreign Key Constraint: `bom_items_component_product_id_fkey` (`component_product_id`) $\rightarrow$ `products`(`id`)
+* **Indexes & Constraints**:
+  * Primary Key: `bom_items_pkey` (`id`)
+  * Index: `ix_bom_items_id` (`id`)
+  * Unique Constraint: `uq_bom_items_bom_component` (`bom_id`, `component_product_id`)
+
+---
+
 ## 2. Entity-Relationship Summary
 
 ```mermaid
@@ -293,6 +332,9 @@ erDiagram
     products ||--o{ inventory_transactions : logs
     orders ||--o{ inventory_transactions : audits
     purchase_orders ||--o{ inventory_transactions : audits
+    products ||--o{ boms : "has recipes"
+    boms ||--|{ bom_items : contains
+    products ||--o{ bom_items : "referenced as component"
 ```
 
 ---
@@ -311,6 +353,7 @@ The database schema evolves through versioned migrations managed by Alembic. The
 | 6 | `686fc3352513` | `88df91a57c03` | `add_received_quantity_to_purchase_order_items` | Adds column `received_quantity` to `purchase_order_items` (type: `Float`, default: `0`, non-nullable). |
 | 7 | `92a21ef01c92` | `686fc3352513` | `add_product_type_to_products` | Adds column `product_type` to `products`, backfills existing rows to `'FINISHED_GOOD'`, and alters it to be non-nullable. |
 | 8 | `c69c1886d559` | `92a21ef01c92` | `add_raw_material_fields_to_products` | Adds `standard_cost` and `default_supplier_id` to `products`, adds FK to `suppliers.id`, backfills cost to `0.00`, and alters it to be non-nullable. |
+| 9 | `cf06b217a05b` | `c69c1886d559` | `create_bom_and_bom_item_tables` | Creates `boms` and `bom_items` tables with keys, index, and compound UniqueConstraint. |
 
 > **Note on Migration Discrepancies:**
 > Table creation queries for `suppliers`, `purchase_orders`, and `purchase_order_items` are not explicitly written in the Alembic versions files. They were either initialized prior to the adoption of Alembic or synced out-of-band using SQLAlchemy's metadata creation engines.

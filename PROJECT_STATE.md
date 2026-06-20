@@ -52,6 +52,12 @@ The backend contains the following operational business modules:
     * PO creation in `DRAFT` status with line items, rate, quantity, and total amount auto-calculation.
     * PO status updates (e.g. `DRAFT` $\rightarrow$ `SENT` $\rightarrow$ `PARTIALLY_RECEIVED` $\rightarrow$ `RECEIVED` / `CANCELLED`).
     * **Fulfillment & Receiving**: Endpoints to receive goods against PO items, incrementing finished goods inventory, updating received quantities on the PO items, and writing transaction logs of type `"PURCHASE_RECEIPT"`.
+11. **Bill of Materials (BOM) (`app/routes/bom.py`)**
+    * Recipe mapping for Finished Goods and Semi-Finished Goods.
+    * Endpoints to manage BOMs (POST, GET, PUT, PATCH activate).
+    * Retrieval of active recipes per product for downstream production (`GET /boms/product/{product_id}`).
+    * Validations enforcing component product types (`RAW_MATERIAL`, `SEMI_FINISHED`, `PACKAGING`), deactivating old active recipes, and blocking direct self-references (`component_product_id != parent_product_id`).
+    * Database unique constraints preventing duplicate component line items on a single recipe.
 
 ---
 
@@ -107,6 +113,12 @@ The backend contains the following operational business modules:
 | | GET | `/purchase-orders/{purchase_order_id}`| Admin, Manager | Get purchase order details with items |
 | | PATCH| `/purchase-orders/{purchase_order_id}/status`| Admin, Manager| Change PO status |
 | | POST | `/purchase-orders/{purchase_order_id}/receive`| Admin, Manager| Receive goods (adds to finished inventory) |
+| **Bill of Materials**| POST| `/boms` | Admin, Manager | Create a BOM and nested items |
+| | GET | `/boms` | Admin, Manager, Staff | List all BOM headers |
+| | GET | `/boms/{id}` | Admin, Manager, Staff | Get BOM details with nested items |
+| | PUT | `/boms/{id}` | Admin, Manager | Replace BOM metadata and items |
+| | PATCH | `/boms/{id}/activate` | Admin, Manager | Activate a specific BOM and deactivate others |
+| | GET | `/boms/product/{product_id}`| Admin, Manager, Staff | Get the active BOM for a product |
 | **Health** | GET | `/Health` | Public | System health check endpoint |
 
 ---
@@ -147,18 +159,16 @@ The backend contains the following operational business modules:
 
 ## 5. Missing Modules & Major Architectural Gaps
 
-1. **Bill of Materials (BOM) System**
-   * Missing mapping of components, ingredients, or raw materials required to produce finished products.
-2. **Raw Material Inventory Tracking**
+1. **Raw Material Inventory Tracking**
    * The current system only tracks finished goods inventory. Raw materials (such as granules, film rolls, ink, adhesives) cannot be recorded, tracked, or adjusted.
-3. **Production Module / Manufacturing Tracking**
+2. **Production Module / Manufacturing Tracking**
    * No concept of production runs, job orders, scheduling, machine utilization, or work-in-progress (WIP).
    * No mechanism to consume raw materials and output finished goods.
-4. **Expense Management & General Ledger**
+3. **Expense Management & General Ledger**
    * No accounting ledger, financial accounts, charts of accounts, or expense tracking.
-5. **Reporting Engine**
+4. **Reporting Engine**
    * No dedicated reporting tables, reporting services, or export functions (e.g. PDF/Excel generation). Aging reports and summaries are calculated ad-hoc in endpoints.
-6. **Frontend Integration**
+5. **Frontend Integration**
    * The frontend folder contains only boilerplate Next.js files and has no components connecting to this backend.
 
 ---

@@ -15,6 +15,7 @@ from app.routes import invoice
 from app.routes import payment
 from app.routes import supplier
 from app.routes import purchase_order
+from app.routes.bom import router as bom_router
 
 app = FastAPI()
 
@@ -29,6 +30,7 @@ app.include_router(invoice.router)
 app.include_router(payment.router)
 app.include_router(supplier.router)
 app.include_router(purchase_order.router)
+app.include_router(bom_router)
 
 @app.get("/Health")
 def root():
