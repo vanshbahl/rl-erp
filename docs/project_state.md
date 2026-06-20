@@ -12,12 +12,13 @@
 - **Payments Module**: Payments collection, balance summary, outstanding reports, aging report.
 - **Supplier Module**: Supplier CRUD, deactivation.
 - **Purchase Orders Module**: PO creation, receiving items and updating inventory.
+- **Production Orders Module**: Production planning, BOM active version snapshotting, scaled component requirement lists, stock check availability, and status tracking (DRAFT, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED).
+- **Production Execution Module**: Physical stock consumption and yield output, execution history tracking, status protection, and rollback capability with finished yield consumption verification checks.
 
 ## In-Progress Modules
-- None (current development session completed).
+- None.
 
 ## Next Priorities
-- **Production Module**: Manufacturing execution, consuming materials.
 - **Inventory Ledger**: Complete movement logs audit trails.
 
 ## Known Issues

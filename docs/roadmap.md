@@ -1,18 +1,18 @@
 # Planned
 
-## Inventory
-
-- Raw Materials
-- Finished Goods
-- BOM
-- Production Jobs
+## Manufacturing
+- Production Costing (Next Milestone)
 
 ## Sales
-
-- Invoices
 - GST
 
 ## Reporting
-
 - Inventory reports
 - Production reports
+
+# Completed
+- Raw Materials Foundation
+- Invoices
+- Bill of Materials (BOM)
+- Production Orders (Planning)
+- Production Execution

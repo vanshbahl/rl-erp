@@ -199,6 +199,7 @@ Logs all inventory movements for auditing.
   * `product_id` (`Integer`): Foreign Key referencing `products.id`. Required (Not Null).
   * `order_id` (`Integer`): Foreign Key referencing `orders.id`. Nullable.
   * `purchase_order_id` (`Integer`): Foreign Key referencing `purchase_orders.id`. Nullable.
+  * `production_execution_id` (`Integer`): Foreign Key referencing `production_executions.id`. Nullable.
   * `quantity_change` (`Float`): Negative values represent deductions; positive values represent stock additions. Required (Not Null).
   * `transaction_type` (`String`): Identifier (`SALE`, `PURCHASE_RECEIPT`, `ADJUSTMENT`, `PRODUCTION_CONSUMPTION`, `PRODUCTION_OUTPUT`, `REVERSAL`, `ORDER_DISPATCH`, `ORDER_CANCEL`). Required (Not Null).
   * `remarks` (`String`): Description. Nullable.
@@ -207,6 +208,9 @@ Logs all inventory movements for auditing.
   * Foreign Key Constraint: `inventory_transactions_product_id_fkey` (`product_id`) $\rightarrow$ `products`(`id`)
   * Foreign Key Constraint: `inventory_transactions_order_id_fkey` (`order_id`) $\rightarrow$ `orders`(`id`)
   * Foreign Key Constraint: `inventory_transactions_purchase_order_id_fkey` (`purchase_order_id`) $\rightarrow$ `purchase_orders`(`id`)
+  * Foreign Key Constraint: `inventory_transactions_production_execution_id_fkey` (`production_execution_id`) $\rightarrow$ `production_executions`(`id`)
+* **Relationships**:
+  * `production_execution`: `relationship("ProductionExecution", back_populates="inventory_transactions")`
 * **Indexes & Constraints**:
   * Primary Key: `inventory_transactions_pkey` (`id`)
   * Index: `ix_inventory_transactions_id` (`id`)
@@ -313,6 +317,106 @@ Stores line items/ingredients for a Bill of Materials.
 
 ---
 
+### Table: `production_orders`
+Stores production orders/jobs.
+
+* **Columns**:
+  * `id` (`Integer`): Primary Key. Auto-incremented.
+  * `product_id` (`Integer`): Foreign Key referencing `products.id`. Required (Not Null).
+  * `bom_id` (`Integer`): Foreign Key referencing `boms.id`. Required (Not Null).
+  * `bom_version` (`Integer`): Snapshotted version of the BOM. Required (Not Null).
+  * `quantity_planned` (`Float`): Planned production quantity. Required (Not Null).
+  * `status` (`String`): Lifecycle status (`DRAFT`, `PLANNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`). Defaults to `'DRAFT'`. Required (Not Null).
+  * `notes` (`String`): General notes. Nullable.
+  * `status_changed_at` (`DateTime`): Timestamp of the last status change. Required (Not Null).
+  * `created_at` (`DateTime`): Creation timestamp. Required (Not Null).
+  * `updated_at` (`DateTime`): Update timestamp. Required (Not Null).
+* **Foreign Keys**:
+  * Foreign Key Constraint: `production_orders_product_id_fkey` (`product_id`) $\rightarrow$ `products`(`id`)
+  * Foreign Key Constraint: `production_orders_bom_id_fkey` (`bom_id`) $\rightarrow$ `boms`(`id`)
+* **Relationships**:
+  * `product`: `relationship("Product")`
+  * `bom`: `relationship("BOM")`
+  * `items`: `relationship("ProductionOrderItem", back_populates="production_order", cascade="all, delete-orphan")`
+* **Indexes & Constraints**:
+  * Primary Key: `production_orders_pkey` (`id`)
+  * Index: `ix_production_orders_id` (`id`)
+
+---
+
+### Table: `production_order_items`
+Stores the snapshot of component requirements for a production order.
+
+* **Columns**:
+  * `id` (`Integer`): Primary Key. Auto-incremented.
+  * `production_order_id` (`Integer`): Foreign Key referencing `production_orders.id` (cascade delete). Required (Not Null).
+  * `component_product_id` (`Integer`): Foreign Key referencing `products.id`. Required (Not Null).
+  * `quantity_required` (`Float`): Scaled quantity needed of the component. Required (Not Null).
+  * `unit_of_measure` (`String`): Unit of measurement of the component at snapshot. Required (Not Null).
+  * `created_at` (`DateTime`): Creation timestamp. Required (Not Null).
+* **Foreign Keys**:
+  * Foreign Key Constraint: `production_order_items_production_order_id_fkey` (`production_order_id`) $\rightarrow$ `production_orders`(`id`) (on delete cascade)
+  * Foreign Key Constraint: `production_order_items_component_product_id_fkey` (`component_product_id`) $\rightarrow$ `products`(`id`)
+* **Relationships**:
+  * `production_order`: `relationship("ProductionOrder", back_populates="items")`
+  * `component`: `relationship("Product")`
+* **Indexes & Constraints**:
+  * Primary Key: `production_order_items_pkey` (`id`)
+  * Index: `ix_production_order_items_id` (`id`)
+  * Unique Constraint: `uq_po_items_po_component` (`production_order_id`, `component_product_id`)
+
+---
+
+### Table: `production_executions`
+Header record for a manufacturing run execution.
+
+* **Columns**:
+  * `id` (`Integer`): Primary Key. Auto-incremented.
+  * `production_order_id` (`Integer`): Foreign Key referencing `production_orders.id`. Required (Not Null).
+  * `executed_by` (`Integer`): Foreign Key referencing `users.id`. Required (Not Null).
+  * `quantity_produced` (`Float`): Actual output quantity produced. Required (Not Null).
+  * `status` (`String`): Execution status (`COMPLETED`, `ROLLED_BACK`). Defaults to `'COMPLETED'`. Required (Not Null).
+  * `notes` (`String`): General notes. Nullable.
+  * `executed_at` (`DateTime`): Timestamp of execution. Defaults to UTC now. Required (Not Null).
+  * `rolled_back_at` (`DateTime`): Timestamp of rollback. Nullable.
+* **Foreign Keys**:
+  * Foreign Key Constraint: `production_executions_production_order_id_fkey` (`production_order_id`) $\rightarrow$ `production_orders`(`id`)
+  * Foreign Key Constraint: `production_executions_executed_by_fkey` (`executed_by`) $\rightarrow$ `users`(`id`)
+* **Relationships**:
+  * `production_order`: `relationship("ProductionOrder")`
+  * `executor`: `relationship("User")`
+  * `items`: `relationship("ProductionExecutionItem", back_populates="execution", cascade="all, delete-orphan")`
+  * `inventory_transactions`: `relationship("InventoryTransaction", back_populates="production_execution")`
+* **Indexes & Constraints**:
+  * Primary Key: `production_executions_pkey` (`id`)
+  * Index: `ix_production_executions_id` (`id`)
+  * Index: `idx_prod_exec_po_status` (`production_order_id`, `status`)
+
+---
+
+### Table: `production_execution_items`
+Detailed planned vs. actual component consumption for each execution.
+
+* **Columns**:
+  * `id` (`Integer`): Primary Key. Auto-incremented.
+  * `execution_id` (`Integer`): Foreign Key referencing `production_executions.id` (cascade delete). Required (Not Null).
+  * `component_product_id` (`Integer`): Foreign Key referencing `products.id`. Required (Not Null).
+  * `quantity_required` (`Float`): Required quantity copied from order items at execution. Required (Not Null).
+  * `quantity_consumed` (`Float`): Actual consumed quantity. Required (Not Null).
+  * `unit_of_measure` (`String`): Unit of measurement snapshot. Required (Not Null).
+* **Foreign Keys**:
+  * Foreign Key Constraint: `production_execution_items_execution_id_fkey` (`execution_id`) $\rightarrow$ `production_executions`(`id`) (on delete cascade)
+  * Foreign Key Constraint: `production_execution_items_component_product_id_fkey` (`component_product_id`) $\rightarrow$ `products`(`id`)
+* **Relationships**:
+  * `execution`: `relationship("ProductionExecution", back_populates="items")`
+  * `component`: `relationship("Product")`
+* **Indexes & Constraints**:
+  * Primary Key: `production_execution_items_pkey` (`id`)
+  * Index: `ix_production_execution_items_id` (`id`)
+  * Unique Constraint: `uq_exec_items_exec_component` (`execution_id`, `component_product_id`)
+
+---
+
 ## 2. Entity-Relationship Summary
 
 ```mermaid
@@ -335,6 +439,14 @@ erDiagram
     products ||--o{ boms : "has recipes"
     boms ||--|{ bom_items : contains
     products ||--o{ bom_items : "referenced as component"
+    products ||--o{ production_orders : "scheduled for"
+    boms ||--o{ production_orders : "based on"
+    production_orders ||--|{ production_order_items : contains
+    products ||--o{ production_order_items : "referenced as component"
+    production_orders ||--o{ production_executions : executes
+    production_executions ||--|{ production_execution_items : contains
+    products ||--o{ production_execution_items : "referenced as component"
+    production_executions ||--o{ inventory_transactions : logs
 ```
 
 ---
@@ -354,6 +466,8 @@ The database schema evolves through versioned migrations managed by Alembic. The
 | 7 | `92a21ef01c92` | `686fc3352513` | `add_product_type_to_products` | Adds column `product_type` to `products`, backfills existing rows to `'FINISHED_GOOD'`, and alters it to be non-nullable. |
 | 8 | `c69c1886d559` | `92a21ef01c92` | `add_raw_material_fields_to_products` | Adds `standard_cost` and `default_supplier_id` to `products`, adds FK to `suppliers.id`, backfills cost to `0.00`, and alters it to be non-nullable. |
 | 9 | `cf06b217a05b` | `c69c1886d559` | `create_bom_and_bom_item_tables` | Creates `boms` and `bom_items` tables with keys, index, and compound UniqueConstraint. |
+| 10 | `310a4097f923` | `cf06b217a05b` | `create_production_orders_tables` | Creates `production_orders` and `production_order_items` tables with unique and foreign key constraints. |
+| 11 | `75dbc95f9297` | `310a4097f923` | `create_production_execution_tables` | Creates `production_executions` and `production_execution_items` tables, adds `production_execution_id` foreign key to `inventory_transactions`. |
 
 > **Note on Migration Discrepancies:**
 > Table creation queries for `suppliers`, `purchase_orders`, and `purchase_order_items` are not explicitly written in the Alembic versions files. They were either initialized prior to the adoption of Alembic or synced out-of-band using SQLAlchemy's metadata creation engines.

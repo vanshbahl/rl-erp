@@ -58,6 +58,18 @@ The backend contains the following operational business modules:
     * Retrieval of active recipes per product for downstream production (`GET /boms/product/{product_id}`).
     * Validations enforcing component product types (`RAW_MATERIAL`, `SEMI_FINISHED`, `PACKAGING`), deactivating old active recipes, and blocking direct self-references (`component_product_id != parent_product_id`).
     * Database unique constraints preventing duplicate component line items on a single recipe.
+12. **Production Orders (`app/routes/production_order.py`, `app/models/production_order.py`, `app/models/production_order_item.py`)**
+    * Create and list production orders (jobs) targeting a Finished or Semi-Finished product.
+    * Resolves and snapshots the active BOM version on creation, scaling required component quantities (`bom_item.quantity * quantity_planned`) into static line items.
+    * Validates parent and component product types, enforcing direct self-reference prevention (`component_product_id != product_id`).
+    * Track lifecycle status updates (`DRAFT`, `PLANNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`) with automatic `status_changed_at` updates.
+13. **Production Execution (`app/routes/production_order.py`, `app/models/production_execution.py`, `app/models/production_execution_item.py`)**
+    * Handles physical inventory movements (raw material/packaging consumption and finished goods yield additions) tied to production orders.
+    * Allows advanced overrides of both consumed components and output yields.
+    * Enforces database transaction atomicity, stock availability checks, and finished goods inventory auto-initialization.
+    * Logs detailed inventory transactions (`PRODUCTION_CONSUMPTION`, `PRODUCTION_OUTPUT`) linking movements to executions.
+    * Supports full operational rollbacks (restoring raw components, removing output yields, creating `REVERSAL` transaction logs, updating execution status to `ROLLED_BACK` and order status to `IN_PROGRESS`) with safety guards preventing rollback if output goods have already been consumed.
+    * Enforces strict production order status transition rules (locking completed or cancelled orders).
 
 ---
 
@@ -119,6 +131,14 @@ The backend contains the following operational business modules:
 | | PUT | `/boms/{id}` | Admin, Manager | Replace BOM metadata and items |
 | | PATCH | `/boms/{id}/activate` | Admin, Manager | Activate a specific BOM and deactivate others |
 | | GET | `/boms/product/{product_id}`| Admin, Manager, Staff | Get the active BOM for a product |
+| **Production Orders** | POST | `/production-orders` | Admin, Manager | Create a production order and snapshot scaled items |
+| | GET | `/production-orders` | Admin, Manager, Staff | List all production order headers |
+| | GET | `/production-orders/{id}` | Admin, Manager, Staff | Get production order details and requirements |
+| | PATCH | `/production-orders/{id}/status` | Admin, Manager | Update production order status with strict transition rules |
+| | GET | `/production-orders/{id}/check-availability` | Admin, Manager, Staff | Compare required component quantities against inventory |
+| | POST | `/production-orders/{id}/execute` | Admin, Manager | Execute production run, mutating inventory and logging transactions |
+| | POST | `/production-orders/{id}/rollback` | Admin, Manager | Rollback production run, restoring inventory and logging reversals |
+| | GET | `/production-orders/{id}/executions` | Admin, Manager, Staff | Retrieve execution run history and material snapshot details |
 | **Health** | GET | `/Health` | Public | System health check endpoint |
 
 ---
@@ -159,16 +179,11 @@ The backend contains the following operational business modules:
 
 ## 5. Missing Modules & Major Architectural Gaps
 
-1. **Raw Material Inventory Tracking**
-   * The current system only tracks finished goods inventory. Raw materials (such as granules, film rolls, ink, adhesives) cannot be recorded, tracked, or adjusted.
-2. **Production Module / Manufacturing Tracking**
-   * No concept of production runs, job orders, scheduling, machine utilization, or work-in-progress (WIP).
-   * No mechanism to consume raw materials and output finished goods.
-3. **Expense Management & General Ledger**
+1. **Expense Management & General Ledger**
    * No accounting ledger, financial accounts, charts of accounts, or expense tracking.
-4. **Reporting Engine**
+2. **Reporting Engine**
    * No dedicated reporting tables, reporting services, or export functions (e.g. PDF/Excel generation). Aging reports and summaries are calculated ad-hoc in endpoints.
-5. **Frontend Integration**
+3. **Frontend Integration**
    * The frontend folder contains only boilerplate Next.js files and has no components connecting to this backend.
 
 ---
@@ -187,3 +202,12 @@ The backend contains the following operational business modules:
    * There are no database seed scripts or mock data generators to quickly set up environments for local testing.
 6. **Incomplete Alembic Migration Graph**
    * Early tables were created outside Alembic or are baselined without table definitions in `baseline_existing_schema.py`. Certain migrations are empty files, making cold setups reliant on manual db initialization or schema synchronization issues.
+
+---
+
+## 7. Manufacturing Roadmap & Next Priorities
+
+1. **Production Costing (Next Milestone)**: Capture standard and actual cost variations based on snapshotted standard material cost * component quantity consumed vs. output yield.
+2. **Inventory Ledger**: Extend transactions mapping into a comprehensive audit report ledger.
+3. **Frontend Integration**: Connect frontend React pages to the developed backend API.
+
