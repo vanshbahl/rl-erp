@@ -6,13 +6,13 @@ This document details the database schema, table definitions, columns, data type
 
 ## 1. Schema Mapping by Table
 
-Below is the dictionary of all tables mapped in the PostgreSQL database.
+Below is the dictionary of all tables mapped in the PostgrsSQL database.
 
 ### Table: `users`
 Stores system users, credentials, and access roles.
 
 * **Columns**:
-  * `id` (`Integer`): Primary Key. Auto-incremented.
+  * `id` (`Integer`): Primary Key. Auto-incremented
   * `username` (`String`): Unique. Name of the user. Required (Not Null).
   * `email` (`String`): Unique. User email. Required (Not Null).
   * `hashed_password` (`String`): Stored password hash. Required (Not Null).
