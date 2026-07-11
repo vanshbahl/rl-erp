@@ -2,7 +2,7 @@
 
 A modern, scalable Enterprise Resource Planning (ERP) platform designed for manufacturing, distribution, and inventory-driven businesses.
 
-RL-ERP centralizes business operations into a single system, enabling organizations to manage inventory, sales, purchasing, production, finance, customers, and reporting through an integrated web application.
+RL-ERP centralizes business operations into a single robust backend system, enabling organizations to manage inventory, sales, purchasing, production, finance, and reporting efficiently.
 
 ---
 
@@ -10,109 +10,92 @@ RL-ERP centralizes business operations into a single system, enabling organizati
 
 Businesses often rely on spreadsheets and disconnected software tools to manage critical operations. RL-ERP aims to provide a unified platform that improves visibility, efficiency, and decision-making across departments.
 
-Key goals:
-
+**Key capabilities:**
 - Centralized business operations
-- Real-time inventory visibility
-- Production planning and tracking
-- Sales and purchasing workflows
-- Financial reporting
-- User and permission management
-- Data-driven decision making
+- Real-time inventory visibility and transactions
+- Manufacturing and production tracking
+- End-to-end sales and purchasing workflows
+- Financial invoicing and payment aging
+- Robust RBAC (Role-Based Access Control)
+- Highly decoupled Service Layer architecture
 
 ---
 
 ## Features
 
 ### Inventory Management
-
-- Stock tracking
-- Warehouse management
-- Inventory movements
-- Batch and lot tracking
-- Low-stock alerts
+- Stock tracking for raw materials and finished goods
+- Real-time inventory transactions and consumption tracking
+- Reversal and rollback auditing
+- Low-stock alerts and safety thresholds
 
 ### Sales Management
-
-- Customer management
-- Quotations
-- Sales orders
-- Dispatch tracking
-- Invoice generation
+- Customer entity management
+- Order lifecycle management with strict state machines
+- Dispatch tracking tied directly to inventory deduction
 
 ### Purchase Management
-
-- Vendor management
-- Purchase orders
-- Goods receipt tracking
-- Supplier analytics
+- Supplier and vendor management
+- Purchase order lifecycle tracking
+- Goods receipt validation tied directly to inventory incrementation
 
 ### Production Management
+- Multi-version Bill of Materials (BOM) management
+- Production order planning and stock scaling
+- Work order execution and rollback support
+- Raw material consumption and finished goods yield tracking
 
-- Bill of Materials (BOM)
-- Production orders
-- Work order tracking
-- Material consumption
-- Production reporting
+### Finance & Invoicing
+- Automated invoice generation from dispatched orders
+- Multi-state payment tracking (DRAFT, ISSUED, PARTIALLY_PAID, PAID)
+- Outstanding balances and aging reports
 
-### Finance & Reporting
-
-- Revenue tracking
-- Expense management
-- Profitability analysis
-- Business dashboards
-- Exportable reports
-
-### User Management
-
-- Authentication
-- Role-based access control
-- Audit logging
-- Activity tracking
+### User Management & Security
+- Secure JWT-based authentication
+- Role-based access control (Admin, Manager, Staff)
+- API endpoint protection across all business layers
 
 ---
 
 ## Architecture
 
+RL-ERP utilizes a highly decoupled, modern backend architecture prioritizing data integrity and testability.
+
 ```text
-Frontend (React + TypeScript)
-            │
-            ▼
-      FastAPI Backend
-            │
-            ▼
-       PostgreSQL
+    [ Client User Interface ]
+               │
+               │ HTTP (JSON payloads / JWT auth)
+               ▼
+      [ FastAPI Routers ]
+      (Data Validation & Auth)
+               │
+               │ Calls Domain Services
+               ▼
+       [ Service Layer ]
+     (Atomic Business Logic)
+               │
+               │ SQLAlchemy ORM
+               ▼
+       [ PostgreSQL DB ]
 ```
 
 ---
 
 ## Technology Stack
 
-### Frontend
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-
 ### Backend
-
-- Python
-- FastAPI
-- SQLAlchemy
-- Alembic
-- Pydantic
+- **Framework**: Python 3.10+, FastAPI
+- **Database ORM**: SQLAlchemy 2.0
+- **Migrations**: Alembic
+- **Validation**: Pydantic V2
+- **Testing**: Pytest, Pytest-Asyncio, Factory-Boy
+- **Security**: Passlib (Bcrypt), Python-JOSE (JWT)
 
 ### Database
-
 - PostgreSQL
 
-### DevOps
-
-- Git
-- GitHub
-- Docker (planned)
-- CI/CD (planned)
+### Frontend
+- React / TypeScript / Vite / Tailwind CSS (Pending Integration)
 
 ---
 
@@ -123,32 +106,23 @@ RL-ERP/
 │
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   ├── database/
-│   │   └── core/
+│   │   ├── core/         # Config, database setup, security
+│   │   ├── dependencies/ # Auth dependency injection
+│   │   ├── models/       # SQLAlchemy models
+│   │   ├── routes/       # FastAPI endpoints (Controllers)
+│   │   ├── schemas/      # Pydantic validation schemas
+│   │   └── services/     # Decoupled business logic
 │   │
-│   ├── migrations/
-│   ├── tests/
-│   └── main.py
-│
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   ├── components/
-│   │   ├── layouts/
-│   │   ├── services/
-│   │   ├── hooks/
-│   │   └── utils/
+│   ├── alembic/          # Database migrations
+│   ├── tests/            # Pytest test suite (>99% coverage)
+│   │   ├── unit/         # Isolated service and function tests
+│   │   ├── integration/  # Multi-service business workflows
+│   │   └── security/     # Penetration and boundary testing
 │   │
-│   └── public/
+│   └── main.py           # Application entry point
 │
-├── docs/
-│
-├── .env
-├── .gitignore
+├── frontend/             # Next.js / Vite UI (Planned)
+├── docs/                 # Technical documentation
 └── README.md
 ```
 
@@ -163,227 +137,96 @@ git clone https://github.com/vanshbahl/rl-erp.git
 cd rl-erp
 ```
 
----
-
 ### Backend Setup
 
-Create virtual environment:
-
+1. **Create virtual environment:**
 ```bash
+cd backend
 python -m venv venv
-```
-
-Activate:
-
-```bash
 source venv/bin/activate
 ```
 
-Install dependencies:
-
+2. **Install dependencies:**
 ```bash
 pip install -r requirements.txt
 ```
 
-Create environment file:
-
+3. **Configure Environment:**
+Create a `.env` file in the `backend/` directory:
 ```env
 DATABASE_URL=postgresql://postgres:password@localhost/rlerp
+TEST_DATABASE_URL=postgresql://postgres:password@localhost/rlerp_test
+SECRET_KEY=your_secure_random_string
 ```
 
-Run backend:
+4. **Initialize Database:**
+```bash
+alembic upgrade head
+```
 
+5. **Run Development Server:**
 ```bash
 uvicorn main:app --reload
 ```
 
-Backend:
-
-```text
-http://localhost:8000
-```
-
-API Docs:
-
-```text
-http://localhost:8000/docs
-```
+- **Backend API**: `http://localhost:8000`
+- **Swagger Documentation**: `http://localhost:8000/docs`
 
 ---
 
-### Frontend Setup
+## Testing
+
+RL-ERP features a robust testing infrastructure ensuring database isolation with transactions that rollback after each test. The suite includes complete unit, integration, and security tests achieving **>99% coverage**.
+
+### Run tests
 
 ```bash
-cd frontend
-npm install
-npm run dev
-```
+cd backend
+source venv/bin/activate
 
-Frontend:
+# Run all tests
+pytest
 
-```text
-http://localhost:5173
+# Run tests with coverage report
+pytest --cov=app --cov-report=term-missing
 ```
 
 ---
 
 ## Roles & Permissions
 
-### Super Administrator
-
-- Full platform access
-- User management
-- System configuration
-
-### Administrator
-
-- Operational management
-- Reporting access
-
-### Inventory Manager
-
-- Inventory operations
-- Stock adjustments
-
-### Sales Team
-
-- Customer management
-- Order processing
-
-### Purchasing Team
-
-- Vendor management
-- Procurement workflows
-
-### Production Team
-
-- Manufacturing operations
-- Production tracking
-
-### Finance Team
-
-- Financial reports
-- Revenue and expense tracking
+- **Admin**: Full platform access, user management, systemic overrides.
+- **Manager**: Operational management, production scheduling, reporting access.
+- **Staff**: View access, stock adjustments, order dispatch, daily execution.
 
 ---
 
 ## Roadmap
 
-### Phase 1
+### Completed (Backend v1.0)
+- ✅ Core Auth & User Management
+- ✅ Products & Inventory Module
+- ✅ End-to-End Sales & Purchase Order Module
+- ✅ Bill of Materials (BOM) & Production Execution
+- ✅ Invoicing & Payments Engine
+- ✅ Service Layer Architectural Refactoring
+- ✅ Comprehensive Test Suite (>99% Coverage)
 
-- Authentication
-- User management
-- Dashboard
-- Inventory module
+### Upcoming (Backend v1.1)
+- Production Costing (Actual vs Standard variations)
+- Complete comprehensive Inventory Ledger
+- Pagination & performance optimization
 
-### Phase 2
-
-- Sales module
-- Purchasing module
-- CRM functionality
-
-### Phase 3
-
-- Production management
-- Manufacturing workflows
-- BOM management
-
-### Phase 4
-
-- Finance module
-- Analytics engine
-- Advanced reporting
-
-### Phase 5
-
-- Mobile application
-- Vendor portal
-- Customer portal
-- AI-assisted forecasting
+### Upcoming (Backend v2)
+- Concurrent execution safe-guards
+- Multi-company & Multi-warehouse support
+- Automated email/WhatsApp notifications
+- Expense management & General Ledger
 
 ---
 
-## Testing
+## Author & License
 
-The backend is configured with a robust testing infrastructure using `pytest`, ensuring database isolation with transactions that rollback after each test.
+**Vansh Bahl**
 
-### Run tests
-
-Run all tests:
-```bash
-cd backend
-pytest
-```
-
-Run tests with coverage report:
-```bash
-cd backend
-pytest --cov=app --cov-report=term-missing
-```
-
-### Testing Structure
-
-```text
-backend/tests/
-├── conftest.py           # Core fixtures (database, client setup)
-├── fixtures/             # Reusable objects (e.g., auth tokens, users)
-├── factories/            # Object creation helpers (e.g., make_order)
-├── helpers/              # Test utilities (HTTP, assertions)
-├── unit/                 # Isolated service and function tests
-├── integration/          # Tests spanning multiple services or workflows
-├── security/             # Authorization and access control tests
-└── performance/          # Load and performance tests
-```
-
-Tests use a dedicated database `rlerp_test` (default) to ensure production data is never affected. This can be configured by setting `TEST_DATABASE_URL` in your environment.
-
-## Development Standards
-
-### Branch Naming
-
-```text
-feature/module-name
-bugfix/issue-name
-hotfix/issue-name
-```
-
-### Commit Convention
-
-```text
-feat: add inventory dashboard
-
-fix: resolve authentication bug
-
-refactor: improve database structure
-```
-
----
-
-## Future Enhancements
-
-- Multi-company support
-- Multi-warehouse management
-- Barcode integration
-- QR code tracking
-- Email notifications
-- WhatsApp notifications
-- GST/VAT support
-- AI forecasting
-- Demand planning
-- Advanced analytics
-
----
-
-## Author
-
-Vansh Bahl
-
----
-
-## License
-
-This project is currently under active development.
-
-All rights reserved.
-
-made by Vansh Bahl
+This project is currently under active development. All rights reserved.

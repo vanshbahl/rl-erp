@@ -14,7 +14,7 @@
 - **Purchase Orders Module**: PO creation, receiving items and updating inventory.
 - **Production Orders Module**: Production planning, BOM active version snapshotting, scaled component requirement lists, stock check availability, and status tracking (DRAFT, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED).
 - **Production Execution Module**: Physical stock consumption and yield output, execution history tracking, status protection, and rollback capability with finished yield consumption verification checks.
-- **Testing Infrastructure**: Comprehensive pytest framework with test database isolation, reusable factories, and integration tests for all major business workflows. >95% test coverage achieved across all core modules.
+- **Testing Infrastructure**: Comprehensive pytest framework with test database isolation, reusable factories, and integration tests for all major business workflows. >95% test coverage achieved across all core modules. Includes rigorous security penetration tests (JWT, SQLi, Role Escalation).
 
 ## In-Progress Modules
 - None.

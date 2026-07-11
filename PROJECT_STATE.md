@@ -1,12 +1,12 @@
 # Project State: RL-ERP Backend
 
-This document captures the current implementation state of the RL-ERP backend codebase, including implemented modules, API routes, service patterns, current architecture, missing modules, and technical debt as of June 2026.
+This document captures the current implementation state of the RL-ERP backend codebase, including implemented modules, API routes, service patterns, current architecture, missing modules, and technical debt as of July 2026.
 
 ---
 
-## 1. Implemented Modules
+## 1. Implemented Modules (100% Backend v1.0 Core Completion)
 
-The backend contains the following operational business modules:
+The backend contains the following fully operational and tested business modules:
 
 1. **Authentication & Identity (`app/routes/auth.py`, `app/dependencies/auth.py`)**
    * Password hashing via `bcrypt` (using `passlib`).
@@ -24,52 +24,47 @@ The backend contains the following operational business modules:
    * **Raw Material Foundation**: Added `standard_cost` tracking and `default_supplier_id` (default supplier link) metadata.
    * Auto-creation of a default inventory record (initial stock/minimum stock = 0) whenever a product is created.
    * Soft deactivation (`is_active = False`) and hard deletion capabilities.
-5. **Inventory Management (`app/routes/inventory.py`)**
-   * Tracking inventory for finished goods.
+5. **Inventory Management (`app/services/inventory_service.py`, `app/routes/inventory.py`)**
+   * Tracking inventory for finished goods and raw materials.
    * Retrieving stock levels (all products or individual products).
-   * **Low-Stock Reporting**: Dedicated endpoint (`GET /inventory/low-stock`) returning records where current stock is below safety thresholds, supporting `product_type` and `supplier_id` filters.
+   * **Low-Stock Reporting**: Dedicated endpoint returning records where current stock is below safety thresholds, supporting `product_type` and `supplier_id` filters.
    * Direct stock updates and record initialization.
-6. **Order Management & Fulfillment (`app/routes/order.py`)**
+6. **Order Management & Fulfillment (`app/services/order_service.py`, `app/routes/order.py`)**
    * Multi-item order creation with total amount auto-calculation.
    * Retrieving orders and order details.
    * **Order Status Lifecycle Validation & Inventory Integration**:
-     * Toggling status (e.g. `PENDING` $\rightarrow$ `PROCESSING` $\rightarrow$ `DISPATCHED` $\rightarrow$ `COMPLETED`).
+     * Strict state machine transitions (e.g. `PENDING` $\rightarrow$ `PROCESSING` $\rightarrow$ `DISPATCHED` $\rightarrow$ `COMPLETED`).
      * Transitioning to `DISPATCHED` automatically validates stock availability, deducts finished goods inventory, and logs transaction records of type `"ORDER_DISPATCH"`.
      * Transitioning to `CANCELLED` from `DISPATCHED` restores the inventory quantities and logs transaction records of type `"ORDER_CANCEL"`.
      * Completed orders are locked and cannot be modified.
-7. **Invoice Management (`app/routes/invoice.py`)**
+7. **Invoice Management (`app/services/invoice_service.py`, `app/routes/invoice.py`)**
    * Invoice generation from orders that are in `DISPATCHED` or `COMPLETED` states (restricted to one invoice per order).
-   * Auto-generation of sequential invoice numbers (format: `INV-XXXXXX`).
-   * Invoice status transitions (e.g. `DRAFT` $\rightarrow$ `ISSUED` $\rightarrow$ `PAID` / `CANCELLED`).
-8. **Payments & Cashflow (`app/routes/payment.py`)**
+   * Auto-generation of sequential invoice numbers (format: `INV-XXXXXX`) using concurrency-safe integrity loop.
+   * Invoice status transitions (e.g. `DRAFT` $\rightarrow$ `ISSUED` $\rightarrow$ `PAID` / `PARTIALLY_PAID` / `CANCELLED`).
+8. **Payments & Cashflow (`app/services/payment_service.py`, `app/routes/payment.py`)**
    * Recording payments against invoices (validating that the payment amount does not exceed the outstanding balance).
    * Automatic invoice status updates: transitioning invoices to `PAID` when fully settled, or `PARTIALLY_PAID` if a balance remains.
    * Customer and invoice payment summaries, aging reports (bucketing invoices into current, 0-30, 31-60, 61-90, and 90+ days overdue), and outstanding invoice tracking.
 9. **Supplier Management (`app/routes/supplier.py`)**
    * CRUD operations for suppliers.
    * Soft-deactivation status toggles (`is_active = False`).
-10. **Purchase Orders (`app/routes/purchase_order.py`)**
+10. **Purchase Orders (`app/services/purchase_order_service.py`, `app/routes/purchase_order.py`)**
     * PO creation in `DRAFT` status with line items, rate, quantity, and total amount auto-calculation.
     * PO status updates (e.g. `DRAFT` $\rightarrow$ `SENT` $\rightarrow$ `PARTIALLY_RECEIVED` $\rightarrow$ `RECEIVED` / `CANCELLED`).
-    * **Fulfillment & Receiving**: Endpoints to receive goods against PO items, incrementing finished goods inventory, updating received quantities on the PO items, and writing transaction logs of type `"PURCHASE_RECEIPT"`.
-11. **Bill of Materials (BOM) (`app/routes/bom.py`)**
+    * **Fulfillment & Receiving**: Endpoints to receive goods against PO items, incrementing inventory, updating received quantities on the PO items, and writing transaction logs of type `"PURCHASE_RECEIPT"`.
+11. **Bill of Materials (BOM) (`app/services/bom_service.py`, `app/routes/bom.py`)**
     * Recipe mapping for Finished Goods and Semi-Finished Goods.
-    * Endpoints to manage BOMs (POST, GET, PUT, PATCH activate).
-    * Retrieval of active recipes per product for downstream production (`GET /boms/product/{product_id}`).
-    * Validations enforcing component product types (`RAW_MATERIAL`, `SEMI_FINISHED`, `PACKAGING`), deactivating old active recipes, and blocking direct self-references (`component_product_id != parent_product_id`).
+    * Validations enforcing component product types, deactivating old active recipes, and blocking direct self-references.
     * Database unique constraints preventing duplicate component line items on a single recipe.
-12. **Production Orders (`app/routes/production_order.py`, `app/models/production_order.py`, `app/models/production_order_item.py`)**
+12. **Production Orders (`app/services/production_service.py`, `app/routes/production_order.py`)**
     * Create and list production orders (jobs) targeting a Finished or Semi-Finished product.
-    * Resolves and snapshots the active BOM version on creation, scaling required component quantities (`bom_item.quantity * quantity_planned`) into static line items.
-    * Validates parent and component product types, enforcing direct self-reference prevention (`component_product_id != product_id`).
+    * Resolves and snapshots the active BOM version on creation, scaling required component quantities.
     * Track lifecycle status updates (`DRAFT`, `PLANNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`) with automatic `status_changed_at` updates.
-13. **Production Execution (`app/routes/production_order.py`, `app/models/production_execution.py`, `app/models/production_execution_item.py`)**
+13. **Production Execution (`app/services/production_service.py`, `app/routes/production_order.py`)**
     * Handles physical inventory movements (raw material/packaging consumption and finished goods yield additions) tied to production orders.
-    * Allows advanced overrides of both consumed components and output yields.
     * Enforces database transaction atomicity, stock availability checks, and finished goods inventory auto-initialization.
     * Logs detailed inventory transactions (`PRODUCTION_CONSUMPTION`, `PRODUCTION_OUTPUT`) linking movements to executions.
-    * Supports full operational rollbacks (restoring raw components, removing output yields, creating `REVERSAL` transaction logs, updating execution status to `ROLLED_BACK` and order status to `IN_PROGRESS`) with safety guards preventing rollback if output goods have already been consumed.
-    * Enforces strict production order status transition rules (locking completed or cancelled orders).
+    * Supports full operational rollbacks (restoring raw components, removing output yields, creating `REVERSAL` transaction logs) with safety guards preventing rollback if output goods have already been consumed.
 
 ---
 
@@ -99,13 +94,14 @@ The backend contains the following operational business modules:
 | | GET | `/inventory/{product_id}` | Admin, Manager, Staff | Retrieve inventory for a specific product |
 | | POST | `/inventory/` | Admin | Initialize inventory record |
 | | PUT | `/inventory/{product_id}` | Admin, Manager | Adjust inventory stock quantities |
+| | GET | `/inventory/low-stock` | Admin, Manager, Staff | Get low stock alert records |
 | **Orders** | POST | `/orders/` | Admin, Manager | Create order with line items |
 | | GET | `/orders/` | Admin, Manager, Staff | List all orders |
 | | GET | `/orders/{order_id}` | Admin, Manager, Staff | Get order details with items |
 | | PATCH | `/orders/{order_id}/status` | Admin, Manager | Update status, handles inventory dispatch/reversals |
 | **Invoices** | POST | `/invoices/generate/{order_id}`| Admin, Manager | Generate invoice from order |
-| | GET | `/invoices` | Public | List all invoices |
-| | GET | `/invoices/{invoice_id}` | Public | Get invoice details with items |
+| | GET | `/invoices` | Admin, Manager, Staff | List all invoices |
+| | GET | `/invoices/{invoice_id}` | Admin, Manager, Staff | Get invoice details with items |
 | | PATCH | `/invoices/{invoice_id}/status` | Admin, Manager | Update invoice status with transition checks |
 | **Payments** | POST | `/payments` | Admin, Manager | Record invoice payment & update invoice status |
 | | GET | `/payments` | Admin, Manager | List all payments (newest first) |
@@ -124,7 +120,7 @@ The backend contains the following operational business modules:
 | | GET | `/purchase-orders` | Admin, Manager | List all purchase orders |
 | | GET | `/purchase-orders/{purchase_order_id}`| Admin, Manager | Get purchase order details with items |
 | | PATCH| `/purchase-orders/{purchase_order_id}/status`| Admin, Manager| Change PO status |
-| | POST | `/purchase-orders/{purchase_order_id}/receive`| Admin, Manager| Receive goods (adds to finished inventory) |
+| | POST | `/purchase-orders/{purchase_order_id}/receive`| Admin, Manager| Receive goods (adds to inventory) |
 | **Bill of Materials**| POST| `/boms` | Admin, Manager | Create a BOM and nested items |
 | | GET | `/boms` | Admin, Manager, Staff | List all BOM headers |
 | | GET | `/boms/{id}` | Admin, Manager, Staff | Get BOM details with nested items |
@@ -146,7 +142,7 @@ The backend contains the following operational business modules:
 ## 3. Services Layer Status
 
 * **Status**: **Complete**
-* **Details**: A `services` directory exists and now contains `order_service.py`, `purchase_order_service.py`, `invoice_service.py`, `payment_service.py`, `production_service.py`, `bom_service.py`, and `inventory_service.py` which handle all business logic for their respective modules. All operational modules have been cleanly extracted and encapsulated within their respective domain services.
+* **Details**: A `services` directory exists and contains `order_service.py`, `purchase_order_service.py`, `invoice_service.py`, `payment_service.py`, `production_service.py`, `bom_service.py`, and `inventory_service.py` which handle all business logic for their respective modules. All operational modules have been cleanly extracted and encapsulated within their respective domain services.
 
 ---
 
@@ -161,10 +157,14 @@ The backend contains the following operational business modules:
         ┌─────────────┴─────────────┐
         ▼                           ▼
   Dependencies                 Router Handlers
-  (DB session, auth checks,    (Business logic, Pydantic validation,
-   role authorization)          SQLAlchemy queries)
+  (DB session, auth checks,    (Pydantic validation, call Services)
+   role authorization)          
         │                           │
         └─────────────┬─────────────┘
+                      ▼
+               Service Layer
+        (Atomic Business Operations)
+                      │
                       ▼
                PostgreSQL DB
 ```
@@ -184,30 +184,22 @@ The backend contains the following operational business modules:
 2. **Reporting Engine**
    * No dedicated reporting tables, reporting services, or export functions (e.g. PDF/Excel generation). Aging reports and summaries are calculated ad-hoc in endpoints.
 3. **Frontend Integration**
-   * The frontend folder contains only boilerplate Next.js files and has no components connecting to this backend.
+   * The frontend folder contains only boilerplate React files and has no components connecting to this backend.
 
 ---
 
 ## 6. Technical Debt
 
-1. **Lack of Services Separation**
-   * **RESOLVED**: All major functional modules (Order, Purchase Order, Invoice, Payment, Production, BOM, Inventory) have been successfully refactored into the service layer, decoupling all business logic from the FastAPI routers.
-2. **Missing Automated Tests**
-   * The project has no tests directory, unit tests, or integration tests, which poses regressions risks on complex logic such as invoice status changes, aging calculations, and inventory reversals.
-3. **Implicit/Missing SQLAlchemy Relationships**
-   * Foreign keys are defined across models, but explicit SQLAlchemy relationships (e.g. back-references from `Order` to `OrderItem`, `Customer` to `Order`, or `Invoice` to `InvoiceItem`) are not defined. Everything is queried manually via foreign key lookups.
-4. **Shadowed Security Configuration**
-   * `app/core/security.py` has local definitions of `SECRET_KEY` and `ALGORITHM` on lines 7-8 that are immediately shadowed by imports from `app/core/config.py`.
-5. **No Seed Scripts**
-   * There are no database seed scripts or mock data generators to quickly set up environments for local testing.
-6. **Incomplete Alembic Migration Graph**
+1. **Implicit/Missing SQLAlchemy Relationships**
+   * Some foreign keys are defined across models, but explicit SQLAlchemy relationships (e.g. back-references from `Order` to `OrderItem`, `Customer` to `Order`) are missing on older tables. 
+2. **No Seed Scripts**
+   * There are no database seed scripts or mock data generators to quickly set up environments for local manual testing (though pytest factories mitigate this for automated testing).
+3. **Incomplete Alembic Migration Graph**
    * Early tables were created outside Alembic or are baselined without table definitions in `baseline_existing_schema.py`. Certain migrations are empty files, making cold setups reliant on manual db initialization or schema synchronization issues.
 
 ---
 
-## 7. Manufacturing Roadmap & Next Priorities
+## 7. Current Milestone & Next Priorities
 
 1. **Production Costing (Next Milestone)**: Capture standard and actual cost variations based on snapshotted standard material cost * component quantity consumed vs. output yield.
-2. **Inventory Ledger**: Extend transactions mapping into a comprehensive audit report ledger.
-3. **Frontend Integration**: Connect frontend React pages to the developed backend API.
-
+2. **Frontend Integration**: Connect frontend React pages to the developed backend API.

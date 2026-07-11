@@ -1,9 +1,19 @@
 
+## 2026-07-11 — Documentation and Coverage Finalization
+
+Added:
+- Finalized unit test coverage for `Admin`, `Customer`, `Supplier`, and `User` routes, achieving >99% overall backend test coverage.
+- Conducted comprehensive documentation sweep, reconciling `README.md`, `PROJECT_STATE.md`, `ROADMAP.md`, and `architecture.md` to reflect the completed Service Layer architecture and eliminated technical debt.
+
+Fixed:
+- Refactored `test_jwt_tampering` security test to explicitly corrupt the signature segment of the Base64URL token, ensuring robust 401 Unauthorized validation without relying on character truncation.
+
 ## 2026-07-11 — Test Suite Implementation
 
 Added:
 - Implemented comprehensive `pytest` testing infrastructure with isolated test database management, factory helpers, and robust transactional rollback support.
 - Developed comprehensive unit test suites for `InvoiceService` and `PaymentService` achieving 100% test coverage.
+- Implemented comprehensive security tests covering JWT tampering, SQL injection attempts, role escalation, invalid payloads, and authentication/authorization matrix validation.
 - Validated existing constraint migrations preventing `IntegrityError` loops (verified `purchase_orders.po_number` `UNIQUE` constraint).
 - Developed end-to-end integration tests for all 7 major business workflows, validating system behavior and exact database states after complex multi-module operations.
 

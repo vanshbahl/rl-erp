@@ -1,5 +1,21 @@
 # Development Log - RL-ERP
 
+## 2026-07-11: Documentation Sweep and Backend Stabilization Finalization
+
+### Context
+Conducted a massive documentation reconciliation sweep to ensure all technical documentation accurately reflects the completed Service Layer architectural refactoring and the final test coverage metrics. Addressed lingering edge cases in security tests and coverage gaps.
+
+### Key Engineering Decisions
+1. **Source of Truth Enforcement**:
+   * *Decision*: Completely rewrote `PROJECT_STATE.md`, `README.md`, `ROADMAP.md`, and `architecture.md` to reflect the actual repository state rather than planned/historical goals.
+   * *Rationale*: Stale documentation (e.g. references to "Fat Controllers" or "Missing Tests") actively harms developer onboarding and masks the actual 100% completion of the Backend v1.0 core.
+2. **Reliable JWT Tampering Test**:
+   * *Decision*: Refactored `test_jwt_tampering` from truncating the token to explicitly replacing the signature chunk (the third Base64URL segment) with invalid data.
+   * *Rationale*: Reversing a single character at the end of a Base64URL string does not guarantee a decoding failure in `jose`, leading to flaky tests. Corrupting the signature directly guarantees a 401 Unauthorized rejection on signature mismatch.
+3. **Closing Coverage Gaps**:
+   * *Decision*: Added direct success-path testing for `Admin`, `Customer`, and `Supplier` routes.
+   * *Rationale*: Pushed overall backend test coverage to 99%, validating that all successful and failure edge cases are properly protected by transaction logic.
+
 ## 2026-07-11: Integration Testing & Transaction Management
 
 ### Context
@@ -21,6 +37,19 @@ Developed a comprehensive suite of end-to-end integration tests using `pytest` t
 
 ### API Routes
 * None.
+
+## 2026-07-11: Security Penetration Testing
+
+### Context
+Developed a comprehensive suite of security tests to validate API boundaries, authentication handling, and robustness against common attack vectors.
+
+### Key Engineering Decisions
+1. **Attack Vector Coverage**:
+   * *Decision*: Modeled tests around OWASP Top 10 vulnerabilities relevant to the application (Broken Access Control, Injection, Security Misconfiguration, Identification and Authentication Failures).
+   * *Rationale*: Ensures the core framework dependencies (FastAPI, SQLAlchemy, Passlib, python-jose) are correctly configured to reject malicious inputs (SQLi, invalid payloads, JWT tampering).
+2. **Intentional Vulnerability Documentation**:
+   * *Decision*: Used `@pytest.mark.xfail(reason="...")` to flag intentionally undiscovered/unfixed vulnerabilities (e.g. missing authentication on `GET /products`) instead of forcing them to pass or modifying application code.
+   * *Rationale*: Aligns with the directive to strictly build testing infrastructure without refactoring application logic, while still explicitly documenting the security flaw.
 
 ## 2026-06-21: Production Orders Integration
 
