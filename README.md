@@ -305,13 +305,37 @@ http://localhost:5173
 
 ## Testing
 
-Run tests:
+The backend is configured with a robust testing infrastructure using `pytest`, ensuring database isolation with transactions that rollback after each test.
 
+### Run tests
+
+Run all tests:
 ```bash
+cd backend
 pytest
 ```
 
----
+Run tests with coverage report:
+```bash
+cd backend
+pytest --cov=app --cov-report=term-missing
+```
+
+### Testing Structure
+
+```text
+backend/tests/
+├── conftest.py           # Core fixtures (database, client setup)
+├── fixtures/             # Reusable objects (e.g., auth tokens, users)
+├── factories/            # Object creation helpers (e.g., make_order)
+├── helpers/              # Test utilities (HTTP, assertions)
+├── unit/                 # Isolated service and function tests
+├── integration/          # Tests spanning multiple services or workflows
+├── security/             # Authorization and access control tests
+└── performance/          # Load and performance tests
+```
+
+Tests use a dedicated database `rlerp_test` (default) to ensure production data is never affected. This can be configured by setting `TEST_DATABASE_URL` in your environment.
 
 ## Development Standards
 
