@@ -1,4 +1,9 @@
 
+## 2026-07-11
+
+Changed:
+- Refactored `app/routes/order.py` to move business logic into a dedicated `OrderService` (`app/services/order_service.py`), adopting a cleaner Service Layer architecture.
+
 ## 2026-06-21
 
 Added:

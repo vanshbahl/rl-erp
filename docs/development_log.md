@@ -66,3 +66,25 @@ Implemented the physical manufacturing execution and rollback workflows of the P
 * `POST /production-orders/{id}/rollback` - Reverts inventory stock additions/deductions and updates execution/order statuses.
 * `GET /production-orders/{id}/executions` - Lists execution histories and line snapshots.
 
+
+## 2026-07-11: Order Module Service Refactor
+
+### Context
+Extracted all business logic from `app/routes/order.py` into a new `OrderService` inside `app/services/order_service.py` to decouple business operations from the HTTP routing layer.
+
+### Key Engineering Decisions
+1. **Separation of Concerns**:
+   * *Decision*: Moved `create_order`, `list_orders`, `get_order`, and `transition_status` entirely out of the router.
+   * *Rationale*: Fat controllers prevent unit testing and reusability. Routes now strictly handle authentication, validation, calling the service, and returning schemas.
+2. **Delegation of Domain Actions**:
+   * *Decision*: Rather than stuffing all logic into one massive update status method, `transition_status` delegates to private domain helpers `_validate_transition`, `_dispatch_order`, and `_cancel_order`.
+   * *Rationale*: Promotes DRY principles and keeps operations highly cohesive and easier to test individually.
+3. **Single Transaction Boundary**:
+   * *Decision*: Handled the `db.commit()` and `db.rollback()` within the main `transition_status` method rather than scattering it across helpers.
+   * *Rationale*: Ensures that a dispatch or cancel operation succeeds or fails entirely atomically.
+
+### Database Changes
+* None. Preserved identical schema and Alembic migrations.
+
+### API Routes
+* Identical endpoints preserved for `POST /orders/`, `GET /orders/`, `GET /orders/{id}`, and `PATCH /orders/{id}/status`.

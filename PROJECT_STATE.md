@@ -145,8 +145,8 @@ The backend contains the following operational business modules:
 
 ## 3. Services Layer Status
 
-* **Status**: **Unused/Empty**
-* **Details**: A `services` directory exists and contains `user_service.py` (which is empty). Currently, all operational business logic, including database transactions, validations, status transition maps, calculations, and error handling, is implemented directly in the route functions (`app/routes/*.py`). 
+* **Status**: **Partially Implemented (In Progress)**
+* **Details**: A `services` directory exists and now contains `order_service.py` which handles all business logic for the Order module (creation, calculation, status transitions, inventory deduction). Other operational business logic for remaining modules is still implemented directly in the route functions (`app/routes/*.py`). 
 
 ---
 
@@ -191,7 +191,7 @@ The backend contains the following operational business modules:
 ## 6. Technical Debt
 
 1. **Lack of Services Separation**
-   * High density of business logic inside route controllers. Calculations, multi-model state changes, and transaction blocks are coupled to FastAPI router code.
+   * High density of business logic inside route controllers for most modules. The Order module has been successfully refactored into a service layer, but other modules remain coupled to FastAPI router code.
 2. **Missing Automated Tests**
    * The project has no tests directory, unit tests, or integration tests, which poses regressions risks on complex logic such as invoice status changes, aging calculations, and inventory reversals.
 3. **Implicit/Missing SQLAlchemy Relationships**
