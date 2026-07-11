@@ -35,21 +35,23 @@ def create_product(
         )
     )
 ):
-    new_product = Product(**product.model_dump())
+    try:
+        new_product = Product(**product.model_dump())
+        db.add(new_product)
+        db.flush()
 
-    db.add(new_product)
-    db.commit()
-    db.refresh(new_product)
-    inventory = Inventory(
-    product_id=new_product.id,
-    quantity=0,
-    minimum_stock=0
-    )
-
-    db.add(inventory)
-    db.commit()
-
-    return new_product
+        inventory = Inventory(
+            product_id=new_product.id,
+            quantity=0,
+            minimum_stock=0
+        )
+        db.add(inventory)
+        db.commit()
+        db.refresh(new_product)
+        return new_product
+    except Exception:
+        db.rollback()
+        raise
 
 
 @router.get("/{product_id}")

@@ -25,50 +25,53 @@ class OrderService:
                 detail="Customer not found"
             )
 
-        order = Order(
-            customer_id=order_data.customer_id,
-            contact_person=order_data.contact_person,
-            po_number=order_data.po_number,
-            remarks=order_data.remarks
-        )
-
-        db.add(order)
-        db.flush()
-
-        order_total = 0.0
-
-        for item in order_data.items:
-            product = (
-                db.query(Product)
-                .filter(Product.id == item.product_id)
-                .first()
+        try:
+            order = Order(
+                customer_id=order_data.customer_id,
+                contact_person=order_data.contact_person,
+                po_number=order_data.po_number,
+                remarks=order_data.remarks
             )
 
-            if not product:
-                db.rollback()
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Product {item.product_id} not found"
+            db.add(order)
+            db.flush()
+
+            order_total = 0.0
+
+            for item in order_data.items:
+                product = (
+                    db.query(Product)
+                    .filter(Product.id == item.product_id)
+                    .first()
                 )
 
-            amount = item.quantity * item.rate
-            order_total += amount
+                if not product:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Product {item.product_id} not found"
+                    )
 
-            order_item = OrderItem(
-                order_id=order.id,
-                product_id=item.product_id,
-                quantity=item.quantity,
-                rate=item.rate,
-                amount=amount
-            )
+                amount = item.quantity * item.rate
+                order_total += amount
 
-            db.add(order_item)
+                order_item = OrderItem(
+                    order_id=order.id,
+                    product_id=item.product_id,
+                    quantity=item.quantity,
+                    rate=item.rate,
+                    amount=amount
+                )
 
-        order.total_amount = order_total
+                db.add(order_item)
 
-        db.commit()
-        db.refresh(order)
-        return order
+            order.total_amount = order_total
+
+            db.commit()
+            db.refresh(order)
+            return order
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
     def list_orders(db: Session) -> list[Order]:
@@ -132,13 +135,33 @@ class OrderService:
 
     @staticmethod
     def _validate_transition(order: Order, status_data: OrderStatusUpdate):
-        if (
-            order.status == "COMPLETED"
-            and status_data.status.value != "COMPLETED"
-        ):
+        allowed_transitions = {
+            "PENDING": ["PROCESSING", "CANCELLED"],
+            "PROCESSING": ["DISPATCHED", "CANCELLED"],
+            "DISPATCHED": ["COMPLETED", "CANCELLED"],
+            "COMPLETED": [],
+            "CANCELLED": [],
+        }
+
+        current = order.status
+        new = status_data.status.value
+
+        if current not in allowed_transitions:
             raise HTTPException(
                 status_code=400,
-                detail="Completed orders cannot be modified"
+                detail=f"Unknown current order status: {current}"
+            )
+
+        if new == current:
+            raise HTTPException(
+                status_code=400,
+                detail="Order is already in that status"
+            )
+
+        if new not in allowed_transitions[current]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Transition from {current} to {new} is not allowed. Allowed: {allowed_transitions[current]}"
             )
 
     @staticmethod

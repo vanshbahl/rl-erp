@@ -88,3 +88,150 @@ Extracted all business logic from `app/routes/order.py` into a new `OrderService
 
 ### API Routes
 * Identical endpoints preserved for `POST /orders/`, `GET /orders/`, `GET /orders/{id}`, and `PATCH /orders/{id}/status`.
+
+## 2026-07-11: Purchase Order Module Service Refactor
+
+### Context
+Extracted all business logic from `app/routes/purchase_order.py` into a new `PurchaseOrderService` inside `app/services/purchase_order_service.py`, mirroring the `OrderService` architecture.
+
+### Key Engineering Decisions
+1. **Separation of Concerns**:
+   * *Decision*: Moved `create_purchase_order`, `list_purchase_orders`, `get_purchase_order`, `transition_status`, and `receive_goods` entirely out of the router.
+   * *Rationale*: Continues the migration away from fat controllers to a decoupled service layer.
+2. **Delegation of Domain Actions**:
+   * *Decision*: Used private helper methods like `_validate_transition` and `_process_receiving`.
+   * *Rationale*: Keeps operations highly cohesive and easier to test individually.
+3. **Single Transaction Boundary**:
+   * *Decision*: `db.commit()` and `db.rollback()` are maintained within the orchestrating methods (`transition_status`, `receive_goods`) ensuring fully atomic database operations.
+
+### Database Changes
+* None. Preserved identical schema and Alembic migrations.
+
+### API Routes
+* Identical endpoints and schemas preserved for all `/purchase-orders/` endpoints.
+
+## 2026-07-11: Invoice Module Service Refactor
+
+### Context
+Extracted all business logic from `app/routes/invoice.py` into a new `InvoiceService` inside `app/services/invoice_service.py`, ensuring consistency with the `OrderService` and `PurchaseOrderService` architectures.
+
+### Key Engineering Decisions
+1. **Separation of Concerns**:
+   * *Decision*: Moved `generate_invoice`, `list_invoices`, `get_invoice`, and `transition_status` entirely out of the router.
+   * *Rationale*: Continues the migration away from fat controllers to a decoupled service layer.
+2. **Delegation of Domain Actions**:
+   * *Decision*: Used private helper methods like `_validate_order`, `_generate_invoice_number`, `_calculate_totals`, `_create_invoice_items`, and `_validate_transition`.
+   * *Rationale*: Keeps operations highly cohesive and easier to test individually.
+3. **Single Transaction Boundary**:
+   * *Decision*: `db.commit()` and `db.rollback()` are maintained within the orchestrating methods (`generate_invoice`, `transition_status`) ensuring fully atomic database operations.
+
+### Database Changes
+* None. Preserved identical schema and Alembic migrations.
+
+### API Routes
+* Identical endpoints and schemas preserved for all `/invoices/` endpoints.
+
+## 2026-07-11: Post-Refactor Safety and Correctness Hotfixes
+
+### Context
+Addressed critical and high-priority correctness issues identified during the senior engineering architectural review.
+
+### Key Engineering Decisions
+1. **Transaction Safety Guards**:
+   * *Decision*: Wrapped `OrderService.create_order` and `InvoiceService.generate_invoice` in outer `try/except Exception: db.rollback(); raise` blocks.
+   * *Rationale*: Ensures that DB errors at the `db.commit()` stage do not leave SQLAlchemy sessions in a dirty, unrolled-back state.
+2. **State Machine Completeness**:
+   * *Decision*: Added `PARTIALLY_PAID` to `InvoiceService._validate_transition`.
+   * *Rationale*: The payment route writes `PARTIALLY_PAID` to invoices. Without this, the invoice service would reject any future transitions.
+3. **Payment Integrity**:
+   * *Decision*: Added a guard in `create_payment` route to only accept invoices in `ISSUED` or `PARTIALLY_PAID` states.
+   * *Rationale*: Prevents business-logic-violating payments against `DRAFT` or `CANCELLED` invoices.
+4. **Concurrency-Safe Invoice Numbering**:
+   * *Decision*: Replaced `COUNT(*) + 1` with an `IntegrityError` retry loop using the `max(id)` approach.
+   * *Rationale*: Safely resolves race conditions under concurrency without requiring schema changes, sequences, or Alembic migrations.
+
+## 2026-07-11: Payment Module Service Refactor
+
+### Context
+Extracted all business logic from `app/routes/payment.py` into a new `PaymentService` inside `app/services/payment_service.py`, maintaining full architectural consistency with existing services.
+
+### Key Engineering Decisions
+1. **Separation of Concerns**:
+   * *Decision*: Moved `create_payment`, `list_payments`, `get_payment`, `invoice_summary`, `customer_summary`, `customer_invoices`, `outstanding_report`, and `aging_report` out of the router.
+   * *Rationale*: Transforms the payment module into a domain service to further migrate towards a decoupled service layer.
+2. **Strict Transaction Boundaries**:
+   * *Decision*: Wrapped `create_payment` inside an outer `try/except Exception: db.rollback(); raise` block, mimicking the post-review safe transaction pattern established in earlier modules.
+   * *Rationale*: Guarantees atomic database operations safely, handling both logical exceptions and ORM failures gracefully without leaking uncommitted state.
+3. **Status Invariants Preserved**:
+   * *Decision*: Included strict guards enforcing `ISSUED` and `PARTIALLY_PAID` conditions exactly as defined in the post-review invoice state machine.
+   * *Rationale*: Ensures full compatibility with the existing InvoiceService module behavior.
+
+### Database Changes
+* None. Preserved identical schema and Alembic migrations.
+
+### API Routes
+* Identical endpoints and schemas preserved for all `/payments/` endpoints.
+
+## 2026-07-11: Production Module Service Refactor
+
+### Context
+Extracted all business logic from the most complex and high-risk module in the system, `app/routes/production_order.py`, into a new `ProductionService` inside `app/services/production_service.py`.
+
+### Key Engineering Decisions
+1. **Method Splitting**:
+   * *Decision*: Split the massive inline blocks into distinct, highly focused private helpers (`_validate_parent_product`, `_get_active_bom`, `_snapshot_bom`, `_calculate_consumption`, `_consume_inventory`, `_add_finished_goods`, `_rollback_consumption`, `_rollback_finished_goods`).
+   * *Rationale*: Dramatically improves testability and readability of production execution and rollback flows without changing behaviour.
+2. **Strict Transaction Boundaries**:
+   * *Decision*: Enforced exact outer `try/except` transaction wrapping for `create_production_order`, `transition_status`, `execute_production`, and `rollback_execution`. Removed inline rollbacks.
+   * *Rationale*: Since production execution simultaneously touches `ProductionExecution`, `ProductionExecutionItem`, `Inventory` (consumption), `Inventory` (output), and generates `InventoryTransaction` records, an atomic transaction boundary is absolutely critical.
+3. **Behavioral Invariance**:
+   * *Decision*: Preserved exact inventory logic (e.g. creating inventory rows if they don't exist during rollback/execution, calculating missing stock).
+   * *Rationale*: Avoided introducing unrequested features like reservations or multi-stage routing, keeping the API contract identical.
+
+### Database Changes
+* None. Preserved identical schema and Alembic migrations.
+
+### API Routes
+* Identical endpoints and schemas preserved for all `/production-orders/` endpoints.
+
+## 2026-07-11: BOM Module Service Refactor
+
+### Context
+Extracted all business logic from `app/routes/bom.py` into a new `BOMService` inside `app/services/bom_service.py`, continuing the migration toward a decoupled service layer.
+
+### Key Engineering Decisions
+1. **Separation of Concerns**:
+   * *Decision*: Moved `create_bom`, `get_boms`, `get_active_bom_by_product`, `get_bom`, `update_bom`, and `activate_bom` out of the router.
+   * *Rationale*: Transforms the BOM module into a domain service, enforcing that routers are strictly for HTTP concerns.
+2. **Strict Transaction Boundaries**:
+   * *Decision*: All write operations (`create_bom`, `update_bom`, `activate_bom`) were wrapped entirely within a single outer `try/except Exception: db.rollback(); raise` block.
+   * *Rationale*: Prevents dirty sessions from unhandled ORM failures or validation errors inside the validation helpers.
+3. **Behavioral Invariance**:
+   * *Decision*: Existing private helpers `_validate_bom_constraints` and `_handle_active_bom_deactivation` were ported and incorporated without logic changes.
+   * *Rationale*: Ensures full backward compatibility with BOM validation and version activation logic.
+
+### Database Changes
+* None. Preserved identical schema and Alembic migrations.
+
+### API Routes
+* Identical endpoints and schemas preserved for all `/boms/` endpoints.
+
+## 2026-07-11: Inventory Module Service Refactor
+
+### Context
+Extracted all business logic from `app/routes/inventory.py` into a new `InventoryService` inside `app/services/inventory_service.py`, marking the completion of the Service Layer migration for all operational modules.
+
+### Key Engineering Decisions
+1. **Separation of Concerns**:
+   * *Decision*: Moved `get_inventory`, `get_low_stock`, `get_inventory_item`, `create_inventory`, and `update_inventory` out of the router.
+   * *Rationale*: Transforms the Inventory module into a domain service, enforcing that all routers are strictly for HTTP concerns.
+2. **Strict Transaction Boundaries**:
+   * *Decision*: All write operations (`create_inventory`, `update_inventory`) were wrapped entirely within a single outer `try/except Exception: db.rollback(); raise` block.
+   * *Rationale*: Prevents dirty sessions from unhandled ORM failures.
+
+### Database Changes
+* None. Preserved identical schema and Alembic migrations.
+
+### API Routes
+* Identical endpoints and schemas preserved for all `/inventory/` endpoints.
+

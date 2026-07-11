@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.dependencies.auth import require_roles
 from app.models.enums import UserRole
-from app.models.inventory import Inventory
-from app.models.product import Product
 from app.models.user import User
 from app.schemas.inventory import InventoryCreate, InventoryUpdate
+from app.services.inventory_service import InventoryService
 
 router = APIRouter(
     prefix="/inventory",
@@ -26,7 +25,7 @@ def get_inventory(
         )
     )
 ):
-    return db.query(Inventory).all()
+    return InventoryService.get_inventory(db)
 
 
 @router.get("/low-stock")
@@ -42,17 +41,7 @@ def get_low_stock(
         )
     )
 ):
-    query = db.query(Inventory).join(Product, Inventory.product_id == Product.id)
-    
-    query = query.filter(Inventory.quantity <= Inventory.minimum_stock)
-    
-    if product_type:
-        query = query.filter(Product.product_type == product_type)
-        
-    if supplier_id:
-        query = query.filter(Product.default_supplier_id == supplier_id)
-        
-    return query.all()
+    return InventoryService.get_low_stock(db, product_type, supplier_id)
 
 
 @router.get("/{product_id}")
@@ -67,19 +56,7 @@ def get_inventory_item(
         )
     )
 ):
-    inventory = (
-        db.query(Inventory)
-        .filter(Inventory.product_id == product_id)
-        .first()
-    )
-
-    if not inventory:
-        raise HTTPException(
-            status_code=404,
-            detail="Inventory record not found"
-        )
-
-    return inventory
+    return InventoryService.get_inventory_item(db, product_id)
 
 
 @router.post("/")
@@ -92,25 +69,7 @@ def create_inventory(
         )
     )
 ):
-    existing = (
-        db.query(Inventory)
-        .filter(Inventory.product_id == inventory.product_id)
-        .first()
-    )
-
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Inventory record already exists"
-        )
-
-    new_inventory = Inventory(**inventory.model_dump())
-
-    db.add(new_inventory)
-    db.commit()
-    db.refresh(new_inventory)
-
-    return new_inventory
+    return InventoryService.create_inventory(db, inventory)
 
 
 @router.put("/{product_id}")
@@ -125,22 +84,4 @@ def update_inventory(
         )
     )
 ):
-    inventory = (
-        db.query(Inventory)
-        .filter(Inventory.product_id == product_id)
-        .first()
-    )
-
-    if not inventory:
-        raise HTTPException(
-            status_code=404,
-            detail="Inventory record not found"
-        )
-
-    for key, value in inventory_data.model_dump(exclude_unset=True).items():
-        setattr(inventory, key, value)
-
-    db.commit()
-    db.refresh(inventory)
-
-    return inventory
+    return InventoryService.update_inventory(db, product_id, inventory_data)

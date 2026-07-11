@@ -4,10 +4,6 @@ from passlib.context import CryptContext
 
 from jose import jwt, JWTError
 
-SECRET_KEY = "your-secret-key"
-ALGORITHM = "HS256"
-
-
 from app.core.config import (
     SECRET_KEY,
     ALGORITHM,
