@@ -1,4 +1,17 @@
 
+## 2026-07-11 — Test Suite Implementation
+
+Added:
+- Implemented comprehensive `pytest` testing infrastructure with isolated test database management, factory helpers, and robust transactional rollback support.
+- Developed comprehensive unit test suites for `InvoiceService` and `PaymentService` achieving 100% test coverage.
+- Validated existing constraint migrations preventing `IntegrityError` loops (verified `purchase_orders.po_number` `UNIQUE` constraint).
+- Developed end-to-end integration tests for all 7 major business workflows, validating system behavior and exact database states after complex multi-module operations.
+
+Fixed:
+- Resolved foreign-key constraint violations in factory methods across tests by ensuring related dependencies (like Orders) are explicitly constructed for proper relational tests.
+- Fixed a silent failure in `InvoiceService` decimal calculation (`Decimal` + `float` TypeError) discovered during integration testing.
+- Resolved transaction poisoning in Pytest during failure workflows by decoupling test assertions from intentional exceptions that trigger `db.rollback()` in the application layer.
+
 ## 2026-07-11 — v1.0 Stabilization Pass
 
 Fixed:

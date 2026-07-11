@@ -1,5 +1,27 @@
 # Development Log - RL-ERP
 
+## 2026-07-11: Integration Testing & Transaction Management
+
+### Context
+Developed a comprehensive suite of end-to-end integration tests using `pytest` to validate complex business workflows crossing multiple modules.
+
+### Key Engineering Decisions
+1. **Transaction Isolation per Test**:
+   * *Decision*: Used nested SQL transactions in a `conftest.py` fixture and rolled back at the end of each test method.
+   * *Rationale*: Guarantees a pristine state between tests without incurring the performance penalty of dropping and recreating the database.
+2. **Handling Application-Level Rollbacks**:
+   * *Decision*: Split invalid workflow tests into separate test functions (e.g. `test_workflow_7_invalid_dispatch`, `test_workflow_7_invalid_transition`) instead of chaining them.
+   * *Rationale*: When the application layer intentionally triggers `db.rollback()` on a business rule violation (e.g., insufficient inventory), it terminates the SQLAlchemy transaction context for the `pytest` session. Subsequent queries in the same test fail with `401 Unauthorized` or `404 Not Found` because the DB state is detached/wiped. Splitting tests isolates these intentional poisoning events.
+3. **Data Types Standardization**:
+   * *Decision*: Added explicit float conversion in `InvoiceService._calculate_totals` when summing `subtotal` (Decimal) and `tax_amount` (float).
+   * *Rationale*: Prevented a silent TypeError uncovered during integration test payment workflows.
+
+### Database Changes
+* None.
+
+### API Routes
+* None.
+
 ## 2026-06-21: Production Orders Integration
 
 ### Context

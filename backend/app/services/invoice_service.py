@@ -164,7 +164,7 @@ class InvoiceService:
     def _calculate_totals(order: Order) -> tuple[float, float, float]:
         subtotal = order.total_amount
         tax_amount = 0.0
-        total_amount = subtotal + tax_amount
+        total_amount = float(subtotal) + float(tax_amount)
         return subtotal, tax_amount, total_amount
 
     @staticmethod

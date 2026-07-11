@@ -49,10 +49,10 @@ def make_user(db, *, username="user", email=None, role="staff", password="pass")
 # Customers
 # ---------------------------------------------------------------------------
 
-def make_customer(db, *, name="Test Customer", email="customer@test.com",
+def make_customer(db, *, company_name="Test Customer", email="customer@test.com",
                   phone="9999999999", is_active=True):
     obj = Customer(
-        name=name,
+        company_name=company_name,
         email=email,
         phone=phone,
         is_active=is_active,
