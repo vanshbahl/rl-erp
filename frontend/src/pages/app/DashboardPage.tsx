@@ -8,8 +8,17 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
-const STATS = [
+type Stat = {
+  title: string
+  value: string
+  change: string
+  trend: "up" | "down" | "neutral"
+  icon: LucideIcon
+}
+
+const STATS: Stat[] = [
   {
     title: "Total Revenue",
     value: "$0",
