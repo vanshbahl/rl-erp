@@ -1,0 +1,250 @@
+@import "tailwindcss";
+
+/*
+ * RL-ERP Design System
+ * 
+ * Two design languages:
+ *   1. Landing — Cinematic, premium, serif hero, animated
+ *   2. ERP    — Clean, dense, sans-serif, fast
+ *
+ * Color philosophy: Slate base + Blue primary + Cyan accent
+ * Avoids generic dashboard aesthetics.
+ */
+
+/* ─── Fonts ─────────────────────────────────────────────────── */
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://fonts.bunny.net/instrument-serif/files/instrument-serif-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://fonts.bunny.net/instrument-serif/files/instrument-serif-latin-400-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ─── Theme: Custom properties ──────────────────────────────── */
+@theme inline {
+  /* Radii */
+  --radius: 0.5rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  /* Fonts */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-slide-up: slide-up 0.4s ease-out;
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+
+  /* Colors — Dark-first premium palette */
+  --color-background: oklch(0.13 0.01 260);
+  --color-foreground: oklch(0.95 0.01 260);
+
+  --color-card: oklch(0.16 0.012 260);
+  --color-card-foreground: oklch(0.95 0.01 260);
+
+  --color-popover: oklch(0.16 0.012 260);
+  --color-popover-foreground: oklch(0.95 0.01 260);
+
+  --color-primary: oklch(0.62 0.15 250);
+  --color-primary-foreground: oklch(0.98 0.005 260);
+
+  --color-secondary: oklch(0.22 0.015 260);
+  --color-secondary-foreground: oklch(0.88 0.01 260);
+
+  --color-muted: oklch(0.20 0.012 260);
+  --color-muted-foreground: oklch(0.60 0.015 260);
+
+  --color-accent: oklch(0.72 0.12 200);
+  --color-accent-foreground: oklch(0.13 0.01 260);
+
+  --color-destructive: oklch(0.58 0.2 25);
+  --color-destructive-foreground: oklch(0.98 0.005 25);
+
+  --color-success: oklch(0.65 0.18 155);
+  --color-success-foreground: oklch(0.98 0.005 155);
+
+  --color-warning: oklch(0.75 0.15 75);
+  --color-warning-foreground: oklch(0.15 0.01 75);
+
+  --color-border: oklch(0.25 0.015 260);
+  --color-input: oklch(0.25 0.015 260);
+  --color-ring: oklch(0.62 0.15 250);
+
+  --color-chart-1: oklch(0.62 0.15 250);
+  --color-chart-2: oklch(0.72 0.12 200);
+  --color-chart-3: oklch(0.65 0.18 155);
+  --color-chart-4: oklch(0.75 0.15 75);
+  --color-chart-5: oklch(0.58 0.2 25);
+
+  /* Sidebar (ERP) */
+  --color-sidebar: oklch(0.11 0.01 260);
+  --color-sidebar-foreground: oklch(0.88 0.01 260);
+  --color-sidebar-primary: oklch(0.62 0.15 250);
+  --color-sidebar-primary-foreground: oklch(0.98 0.005 260);
+  --color-sidebar-accent: oklch(0.18 0.015 260);
+  --color-sidebar-accent-foreground: oklch(0.88 0.01 260);
+  --color-sidebar-border: oklch(0.22 0.012 260);
+  --color-sidebar-ring: oklch(0.62 0.15 250);
+}
+
+/* ─── Keyframes ─────────────────────────────────────────────── */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* ─── Base styles ───────────────────────────────────────────── */
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ─── Selection ─────────────────────────────────────────────── */
+::selection {
+  background-color: oklch(0.62 0.15 250 / 0.3);
+  color: var(--color-foreground);
+}
+
+/* ─── Scrollbar (ERP-optimized) ─────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.30 0.015 260);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.40 0.015 260);
+}
+
+/* ─── Focus ring ────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* ─── Landing page utilities ────────────────────────────────── */
+.landing-gradient-text {
+  background: linear-gradient(
+    135deg,
+    oklch(0.85 0.08 250) 0%,
+    oklch(0.80 0.12 200) 50%,
+    oklch(0.90 0.05 260) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.landing-glow {
+  box-shadow:
+    0 0 20px oklch(0.62 0.15 250 / 0.15),
+    0 0 60px oklch(0.72 0.12 200 / 0.08);
+}
+
+.landing-border-glow {
+  border: 1px solid oklch(0.30 0.04 250);
+  background: oklch(0.14 0.015 260 / 0.6);
+  backdrop-filter: blur(12px);
+}
+
+/* Glass card for landing page sections */
+.glass-card {
+  background: oklch(0.15 0.012 260 / 0.5);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid oklch(0.28 0.02 260);
+  border-radius: var(--radius-xl);
+}
+
+/* Noise texture overlay for premium feel */
+.noise-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Light mode override (for future use) ──────────────────── */
+.light {
+  --color-background: oklch(0.98 0.005 260);
+  --color-foreground: oklch(0.15 0.015 260);
+  --color-card: oklch(1.00 0 0);
+  --color-card-foreground: oklch(0.15 0.015 260);
+  --color-popover: oklch(1.00 0 0);
+  --color-popover-foreground: oklch(0.15 0.015 260);
+  --color-primary: oklch(0.55 0.18 250);
+  --color-primary-foreground: oklch(0.98 0.005 260);
+  --color-secondary: oklch(0.95 0.008 260);
+  --color-secondary-foreground: oklch(0.20 0.015 260);
+  --color-muted: oklch(0.93 0.005 260);
+  --color-muted-foreground: oklch(0.45 0.015 260);
+  --color-accent: oklch(0.92 0.008 260);
+  --color-accent-foreground: oklch(0.20 0.015 260);
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-border: oklch(0.90 0.005 260);
+  --color-input: oklch(0.90 0.005 260);
+  --color-ring: oklch(0.55 0.18 250);
+  --color-sidebar: oklch(0.97 0.005 260);
+  --color-sidebar-foreground: oklch(0.25 0.015 260);
+  --color-sidebar-primary: oklch(0.55 0.18 250);
+  --color-sidebar-primary-foreground: oklch(0.98 0.005 260);
+  --color-sidebar-accent: oklch(0.95 0.008 260);
+  --color-sidebar-accent-foreground: oklch(0.25 0.015 260);
+  --color-sidebar-border: oklch(0.90 0.005 260);
+  --color-sidebar-ring: oklch(0.55 0.18 250);
+}
