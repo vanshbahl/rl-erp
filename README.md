@@ -202,7 +202,6 @@ pytest --cov=app --cov-report=term-missing
 ---
 
 ## Roadmap
-
 ### Completed (Backend v1.0)
 - ✅ Core Auth & User Management
 - ✅ Products & Inventory Module
