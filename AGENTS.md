@@ -10,6 +10,9 @@ Technology Stack:
 * Alembic
 * Pydantic
 * Docker
+* React 19 (Vite)
+* Tailwind CSS v4
+* Zustand & React Query
 
 Development Principles:
 

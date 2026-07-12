@@ -95,7 +95,11 @@ RL-ERP utilizes a highly decoupled, modern backend architecture prioritizing dat
 - PostgreSQL
 
 ### Frontend
-- React / TypeScript / Vite / Tailwind CSS (Pending Integration)
+- **Framework**: React 19 (Vite)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4, shadcn/ui
+- **State/Data**: Zustand, TanStack Query, Axios
+- **Animations**: Framer Motion (Restraint-focused)
 
 ---
 
@@ -172,6 +176,21 @@ uvicorn main:app --reload
 - **Backend API**: `http://localhost:8000`
 - **Swagger Documentation**: `http://localhost:8000/docs`
 
+### Frontend Setup
+
+1. **Install dependencies:**
+```bash
+cd frontend
+npm install
+```
+
+2. **Run Development Server:**
+```bash
+npm run dev
+```
+
+- **Frontend App**: `http://localhost:5173`
+
 ---
 
 ## Testing
@@ -210,6 +229,15 @@ pytest --cov=app --cov-report=term-missing
 - ✅ Invoicing & Payments Engine
 - ✅ Service Layer Architectural Refactoring
 - ✅ Comprehensive Test Suite (>99% Coverage)
+- ✅ Frontend Foundation & Build Pipeline
+- ✅ Custom Theme Provider & Design System
+- ✅ Premium Landing Page (Marketing)
+
+### Upcoming (Frontend)
+- JWT Authentication & Protected Routes
+- Dashboard Shell & Sidebar Navigation
+- Products & Inventory Modules
+- Orders & Production Modules
 
 ### Upcoming (Backend v1.1)
 - Production Costing (Actual vs Standard variations)

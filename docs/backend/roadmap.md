@@ -23,6 +23,4 @@
 - Automated Email / WhatsApp Notifications
 
 ## Frontend
-- Integrate React UI with FastAPI Backend
-- Real-time WebSockets Dashboard for Production Monitoring
-- Vendor and Customer External Portals
+*Please see [Frontend Roadmap](../frontend/roadmap.md) for the detailed frontend implementation plan.*

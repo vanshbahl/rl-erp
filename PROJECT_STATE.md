@@ -183,8 +183,10 @@ The backend contains the following fully operational and tested business modules
    * No accounting ledger, financial accounts, charts of accounts, or expense tracking.
 2. **Reporting Engine**
    * No dedicated reporting tables, reporting services, or export functions (e.g. PDF/Excel generation). Aging reports and summaries are calculated ad-hoc in endpoints.
-3. **Frontend Integration**
-   * The frontend folder contains only boilerplate React files and has no components connecting to this backend.
+3. **Frontend Integration (In Progress)**
+   * The frontend foundation is complete (React 19, Vite, Tailwind v4, custom ThemeProvider).
+   * Premium Landing Page marketing site and interactive simulators are fully built.
+   * Core ERP module integration (Dashboard, Products, Auth) is pending.
 
 ---
 
@@ -201,5 +203,6 @@ The backend contains the following fully operational and tested business modules
 
 ## 7. Current Milestone & Next Priorities
 
-1. **Production Costing (Next Milestone)**: Capture standard and actual cost variations based on snapshotted standard material cost * component quantity consumed vs. output yield.
-2. **Frontend Integration**: Connect frontend React pages to the developed backend API.
+1. **Frontend Authentication**: Implement `/login` and `/register` flows and integrate with the backend JWT endpoints.
+2. **Frontend Dashboard Shell**: Build the authenticated `/app` layout, sidebar navigation, and routing.
+3. **Production Costing (Backend Milestone)**: Capture standard and actual cost variations based on snapshotted standard material cost * component quantity consumed vs. output yield.
