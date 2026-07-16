@@ -40,126 +40,50 @@ Documentation Rules:
 Whenever a feature is completed:
 
 * Update README.md if user-facing behavior changed.
-* Update docs/changelog.md.
-* Update docs/roadmap.md.
-* Update docs/project_state.md.
-* Update docs/development_log.md.
+* Update PRD.md if product requirements or features changed.
+* Update TRD.md if architecture or tech stack changed.
+* Update UI_UX_Design.md if design systems changed.
+* Update App_Flow.md if workflows or state machines changed.
+* Update Backend_Schema.md if database schema or API structures changed.
+* Update Developer_Guide.md if setup instructions or coding patterns changed.
 
 Documentation Responsibilities
 
-README.md
-Purpose:
-- Project overview
+README.md owns:
+- Project overview and tech stack
+- High-level architecture
 - Setup instructions
-- Current major features
-- API overview
+- Links to core documentation
 
-Update When:
-- New user-facing feature is added
-- Setup process changes
-- Architecture changes significantly
+PRD.md owns:
+- Product vision, goals, and user stories
+- Target users and feature lists
+- Non-goals and acceptance criteria
 
-Never Store:
-- Future plans
-- Session notes
-- Bug lists
+TRD.md owns:
+- System architecture details and deployment patterns
+- State management and security flows
+- Scaling and performance considerations
 
+UI_UX_Design.md owns:
+- Design philosophy and visual identity
+- Typography, spacing, and animations
+- Component states (loading, empty, error)
 
-docs/changelog.md
-Purpose:
-- Historical record of completed work
+App_Flow.md owns:
+- User workflows and flow diagrams
+- Order, production, and invoice state machines
+- Error handling flows
 
-Update When:
-- Feature completed
-- Refactor completed
-- Breaking change introduced
+Backend_Schema.md owns:
+- Database ERD and table definitions
+- Enums, constraints, and migrations
+- Service logic documentation
 
-Format:
-
-## YYYY-MM-DD
-
-Added:
-- Item
-
-Changed:
-- Item
-
-Fixed:
-- Item
-
-Never Store:
-- Future plans
-- TODOs
-
-
-docs/roadmap.md
-Purpose:
-- Planned future work
-
-Update When:
-- New feature planned
-- Priority changes
-
-Format:
-
-Planned
-In Progress
-Completed
-
-Never Store:
-- Implementation details
-- Session logs
-
-
-docs/project_state.md
-Purpose:
-- Current snapshot of project
-
-Update When:
-- End of every development session
-
-Contains:
-- Completed modules
-- In-progress modules
-- Next priorities
-- Known issues
-
-Never Store:
-- Detailed change history
-
-
-docs/architecture.md
-Purpose:
-- System architecture
-
-Update When:
-- New module added
-- Database design changes
-- Major refactor
-
-Contains:
-- Module relationships
-- Data flow
-- Database design
-
-Never Store:
-- Session notes
-
-
-docs/development_log.md
-Purpose:
-- Detailed engineering journal
-
-Update When:
-- Significant work completed
-
-Contains:
-- Why decisions were made
-- Tradeoffs
-- Technical notes
-
-Never Store:
-- Future roadmap items
+Developer_Guide.md owns:
+- Local setup and environment variables
+- Coding standards and folder conventions
+- Git workflow and testing strategy
 
 Documentation Consistency Rule
 
@@ -188,44 +112,14 @@ Before marking any feature as complete:
 - API schemas updated
 - Alembic migration created (if required)
 - README reviewed
-- changelog updated
-- project_state updated
-- roadmap updated
-- architecture updated if system design changed
-- development_log updated if technical decisions were made
+- PRD updated (if features changed)
+- TRD updated (if architecture changed)
+- UI_UX_Design updated (if frontend changed)
+- App_Flow updated (if flows changed)
+- Backend_Schema updated (if DB changed)
+- Developer_Guide updated (if setup changed)
 
-Documentation File Ownership
 
-README.md owns:
-- Project overview
-- Setup instructions
-- Feature summary
-- API overview
-
-docs/changelog.md owns:
-- Completed work history only
-
-docs/roadmap.md owns:
-- Future work
-- Priorities
-- Project phases
-
-docs/project_state.md owns:
-- Current status
-- In-progress work
-- Known issues
-- Next priorities
-
-docs/architecture.md owns:
-- System architecture
-- Database design
-- Module relationships
-- Data flow
-
-docs/development_log.md owns:
-- Engineering decisions
-- Tradeoffs
-- Technical implementation notes
 
 Never place information into a file that is owned by another document.
 
@@ -260,10 +154,9 @@ Session Start Procedure:
 
 1. Read AGENTS.md.
 2. Read README.md.
-3. Read docs/project_state.md.
-4. Read docs/roadmap.md.
-5. Read docs/changelog.md.
-6. Read docs/architecture.md.
+3. Read PRD.md to understand the product vision.
+4. Read App_Flow.md and TRD.md to understand the current architecture.
+5. Read Backend_Schema.md if working on the database.
 7. Review git status.
 8. Review recent commits.
 9. Summarize current project state.

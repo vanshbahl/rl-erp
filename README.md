@@ -6,60 +6,64 @@ RL-ERP centralizes business operations into a single robust backend system, enab
 
 ---
 
-## Overview
+## 📖 Core Documentation
+
+For detailed guides and reference documentation, please consult the following master documents:
+
+- **[Product Requirements Document (PRD)](PRD.md)**: Product vision, goals, and feature requirements.
+- **[Technical Reference Document (TRD)](TRD.md)**: System architecture, tech stack, and design decisions.
+- **[UI/UX Design](UI_UX_Design.md)**: Frontend design system, typography, and interaction guidelines.
+- **[App Flow](App_Flow.md)**: User journeys and state-machine flow diagrams.
+- **[Backend Schema](Backend_Schema.md)**: Database ERD, table structures, and ORM behaviors.
+- **[Developer Guide](Developer_Guide.md)**: Local setup, git workflow, and coding conventions.
+
+---
+
+## 🚀 Overview
 
 Businesses often rely on spreadsheets and disconnected software tools to manage critical operations. RL-ERP aims to provide a unified platform that improves visibility, efficiency, and decision-making across departments.
 
-**Key capabilities:**
-- Centralized business operations
-- Real-time inventory visibility and transactions
-- Manufacturing and production tracking
-- End-to-end sales and purchasing workflows
-- Financial invoicing and payment aging
-- Robust RBAC (Role-Based Access Control)
-- Highly decoupled Service Layer architecture
+### Features
+- **Inventory Management**: Stock tracking for raw materials and finished goods, low-stock alerts, and atomic transaction logs.
+- **Sales Management**: Customer management, strictly-enforced order lifecycles, and automated dispatch-to-inventory deduction.
+- **Purchase Management**: Supplier management, purchase order tracking, and seamless goods receipt.
+- **Production Management**: Multi-version Bill of Materials (BOM), production job planning, scaleable material requirements, and yielding execution with rollback support.
+- **Finance & Invoicing**: Automated invoice generation and multi-state payment tracking.
+- **User Management & Security**: Secure JWT authentication and Role-Based Access Control (RBAC).
 
 ---
 
-## Features
+## 🖼️ Screenshots
 
-### Inventory Management
-- Stock tracking for raw materials and finished goods
-- Real-time inventory transactions and consumption tracking
-- Reversal and rollback auditing
-- Low-stock alerts and safety thresholds
-
-### Sales Management
-- Customer entity management
-- Order lifecycle management with strict state machines
-- Dispatch tracking tied directly to inventory deduction
-
-### Purchase Management
-- Supplier and vendor management
-- Purchase order lifecycle tracking
-- Goods receipt validation tied directly to inventory incrementation
-
-### Production Management
-- Multi-version Bill of Materials (BOM) management
-- Production order planning and stock scaling
-- Work order execution and rollback support
-- Raw material consumption and finished goods yield tracking
-
-### Finance & Invoicing
-- Automated invoice generation from dispatched orders
-- Multi-state payment tracking (DRAFT, ISSUED, PARTIALLY_PAID, PAID)
-- Outstanding balances and aging reports
-
-### User Management & Security
-- Secure JWT-based authentication
-- Role-based access control (Admin, Manager, Staff)
-- API endpoint protection across all business layers
+*[Screenshots placeholder]*
 
 ---
 
-## Architecture
+## 💻 Tech Stack
 
-RL-ERP utilizes a highly decoupled, modern backend architecture prioritizing data integrity and testability.
+### Backend
+- **Framework**: Python 3.10+, FastAPI
+- **Database ORM**: SQLAlchemy 2.0
+- **Migrations**: Alembic
+- **Validation**: Pydantic V2
+- **Testing**: Pytest, Pytest-Asyncio, Factory-Boy (>99% coverage)
+- **Security**: Passlib (Bcrypt), Python-JOSE (JWT)
+
+### Database
+- PostgreSQL 14+
+
+### Frontend
+- **Framework**: React 19 (Vite)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4, shadcn/ui
+- **State/Data**: Zustand, TanStack Query, Axios
+- **Animations**: Framer Motion
+
+---
+
+## 🏗️ Architecture Overview
+
+RL-ERP utilizes a highly decoupled backend architecture prioritizing data integrity and testability.
 
 ```text
     [ Client User Interface ]
@@ -81,179 +85,127 @@ RL-ERP utilizes a highly decoupled, modern backend architecture prioritizing dat
 
 ---
 
-## Technology Stack
-
-### Backend
-- **Framework**: Python 3.10+, FastAPI
-- **Database ORM**: SQLAlchemy 2.0
-- **Migrations**: Alembic
-- **Validation**: Pydantic V2
-- **Testing**: Pytest, Pytest-Asyncio, Factory-Boy
-- **Security**: Passlib (Bcrypt), Python-JOSE (JWT)
-
-### Database
-- PostgreSQL
-
-### Frontend
-- **Framework**: React 19 (Vite)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4, shadcn/ui
-- **State/Data**: Zustand, TanStack Query, Axios
-- **Animations**: Framer Motion (Restraint-focused)
-
----
-
-## Project Structure
+## 📁 Folder Structure
 
 ```text
 RL-ERP/
-│
 ├── backend/
 │   ├── app/
-│   │   ├── core/         # Config, database setup, security
+│   │   ├── core/         # Config & security
 │   │   ├── dependencies/ # Auth dependency injection
 │   │   ├── models/       # SQLAlchemy models
-│   │   ├── routes/       # FastAPI endpoints (Controllers)
-│   │   ├── schemas/      # Pydantic validation schemas
-│   │   └── services/     # Decoupled business logic
-│   │
+│   │   ├── routes/       # FastAPI endpoints
+│   │   ├── schemas/      # Pydantic schemas
+│   │   └── services/     # Business logic
 │   ├── alembic/          # Database migrations
-│   ├── tests/            # Pytest test suite (>99% coverage)
-│   │   ├── unit/         # Isolated service and function tests
-│   │   ├── integration/  # Multi-service business workflows
-│   │   └── security/     # Penetration and boundary testing
-│   │
+│   ├── tests/            # Pytest test suite
 │   └── main.py           # Application entry point
-│
-├── frontend/             # Next.js / Vite UI (Planned)
-├── docs/                 # Technical documentation
+├── frontend/
+│   ├── src/              # React code
+│   └── package.json
+├── PRD.md                # Product Requirements
+├── TRD.md                # Technical Reference
+├── Developer_Guide.md    # Dev Onboarding
 └── README.md
 ```
 
 ---
 
-## Local Development
+## 🛠️ Installation & Running Locally
 
-### Clone Repository
+Please see the **[Developer Guide](Developer_Guide.md)** for detailed, step-by-step installation instructions.
 
-```bash
-git clone https://github.com/vanshbahl/rl-erp.git
-cd rl-erp
-```
-
-### Backend Setup
-
-1. **Create virtual environment:**
+### Quick Start (Backend)
 ```bash
 cd backend
 python -m venv venv
 source venv/bin/activate
-```
-
-2. **Install dependencies:**
-```bash
 pip install -r requirements.txt
-```
-
-3. **Configure Environment:**
-Create a `.env` file in the `backend/` directory:
-```env
-DATABASE_URL=postgresql://postgres:password@localhost/rlerp
-TEST_DATABASE_URL=postgresql://postgres:password@localhost/rlerp_test
-SECRET_KEY=your_secure_random_string
-```
-
-4. **Initialize Database:**
-```bash
 alembic upgrade head
-```
-
-5. **Run Development Server:**
-```bash
 uvicorn main:app --reload
 ```
+*API running at `http://localhost:8000`*
 
-- **Backend API**: `http://localhost:8000`
-- **Swagger Documentation**: `http://localhost:8000/docs`
-
-### Frontend Setup
-
-1. **Install dependencies:**
+### Quick Start (Frontend)
 ```bash
 cd frontend
 npm install
-```
-
-2. **Run Development Server:**
-```bash
 npm run dev
 ```
-
-- **Frontend App**: `http://localhost:5173`
+*UI running at `http://localhost:5173`*
 
 ---
 
-## Testing
+## ⚙️ Environment Variables
 
-RL-ERP features a robust testing infrastructure ensuring database isolation with transactions that rollback after each test. The suite includes complete unit, integration, and security tests achieving **>99% coverage**.
+The backend requires a `.env` file in the `backend/` directory:
 
-### Run tests
-
-```bash
-cd backend
-source venv/bin/activate
-
-# Run all tests
-pytest
-
-# Run tests with coverage report
-pytest --cov=app --cov-report=term-missing
+```env
+DATABASE_URL=postgresql://user:password@localhost/rlerp
+TEST_DATABASE_URL=postgresql://user:password@localhost/rlerp_test
+SECRET_KEY=your_secure_random_string
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
 ```
 
 ---
 
-## Roles & Permissions
+## 🧰 Available Scripts
 
-- **Admin**: Full platform access, user management, systemic overrides.
-- **Manager**: Operational management, production scheduling, reporting access.
-- **Staff**: View access, stock adjustments, order dispatch, daily execution.
+**Backend (`backend/`)**
+- `uvicorn main:app --reload`: Start development server.
+- `alembic upgrade head`: Run database migrations.
+- `pytest`: Run test suite.
+- `pytest --cov=app`: Run tests with coverage report.
 
----
-
-## Roadmap
-### Completed (Backend v1.0)
-- ✅ Core Auth & User Management
-- ✅ Products & Inventory Module
-- ✅ End-to-End Sales & Purchase Order Module
-- ✅ Bill of Materials (BOM) & Production Execution
-- ✅ Invoicing & Payments Engine
-- ✅ Service Layer Architectural Refactoring
-- ✅ Comprehensive Test Suite (>99% Coverage)
-- ✅ Frontend Foundation & Build Pipeline
-- ✅ Custom Theme Provider & Design System
-- ✅ Premium Landing Page (Marketing)
-
-### Upcoming (Frontend)
-- JWT Authentication & Protected Routes
-- Dashboard Shell & Sidebar Navigation
-- Products & Inventory Modules
-- Orders & Production Modules
-
-### Upcoming (Backend v1.1)
-- Production Costing (Actual vs Standard variations)
-- Complete comprehensive Inventory Ledger
-- Pagination & performance optimization
-
-### Upcoming (Backend v2)
-- Concurrent execution safe-guards
-- Multi-company & Multi-warehouse support
-- Automated email/WhatsApp notifications
-- Expense management & General Ledger
+**Frontend (`frontend/`)**
+- `npm run dev`: Start development server.
+- `npm run build`: Build production bundle.
+- `npm run lint`: Run ESLint.
 
 ---
 
-## Author & License
+## 🌐 API Overview
 
-**Vansh Bahl**
+The API is fully documented via Swagger. Once the backend is running, navigate to:
+`http://localhost:8000/docs`
 
-This project is currently under active development. All rights reserved.
+Core API route groupings include: `/auth`, `/users`, `/admin`, `/customers`, `/products`, `/inventory`, `/orders`, `/invoices`, `/payments`, `/suppliers`, `/purchase-orders`, `/boms`, and `/production-orders`.
+
+---
+
+## 🗄️ Database Overview
+
+The PostgreSQL database enforces strict referential integrity. All state transitions (e.g., executing a production job) use transactional database locks and write immutable audit logs to the `inventory_transactions` table. See the **[Backend Schema](Backend_Schema.md)** document for full ERD and definitions.
+
+---
+
+## 🔒 Authentication
+
+All API endpoints (except public health checks and login/register) are secured via stateless JWT tokens. Role-Based Access Control (RBAC) restricts endpoints based on user roles (`admin`, `manager`, `staff`).
+
+---
+
+## 📈 Project Status & Roadmap
+
+The backend `v1.0` is complete and fully tested. The frontend shell and core modules are currently under active development.
+
+### Upcoming
+- Complete Frontend Dashboard Shell & Sidebar Navigation.
+- Build React Modules for Inventory, Orders, and Production.
+- Implement Production Costing (Actual vs Standard variations) in the backend.
+
+---
+
+## 🤝 Contributing
+
+*[Contributing guidelines placeholder]*
+
+---
+
+## 📜 License
+
+*[License placeholder]*
+
+---
+*Developed by Vansh Bahl*
