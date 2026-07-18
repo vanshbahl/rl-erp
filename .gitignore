@@ -29,3 +29,5 @@ frontend(old)/
 docs/frontend/ORDER
 
 .agents/
+
+AGENTS.md
