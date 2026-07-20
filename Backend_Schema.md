@@ -21,9 +21,11 @@ erDiagram
         numeric standard_cost
     }
     inventory {
+
         int id PK
         int product_id FK
         float quantity
+        
     }
     customers ||--o{ orders : "places"
     orders ||--|{ order_items : "contains"
