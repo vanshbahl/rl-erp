@@ -64,8 +64,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="light flex min-h-screen items-center justify-center bg-[#f7f7f5] px-4 py-10 text-[#171717]">
-      <Card className="w-full max-w-[420px] rounded-none border-neutral-300 bg-white shadow-none">
+    <div className="light flex min-h-screen items-center justify-center bg-[#f5f5f3] px-4 py-10 text-[#202124]">
+      <Card className="w-full max-w-[420px] rounded-lg border-neutral-200/90 bg-white shadow-none">
         <CardHeader className="space-y-6 p-6 sm:p-8">
           <div>
             <p className="text-xl font-bold tracking-tight text-neutral-950">RL-ERP</p>
@@ -83,7 +83,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label className="text-neutral-800" htmlFor="email">Email</Label>
               <Input
-                className="border-neutral-300 bg-white text-neutral-950"
+                className="border-neutral-200 bg-[#fafaf8] text-neutral-950"
                 id="email"
                 type="email"
                 autoComplete="email"
@@ -96,7 +96,7 @@ export default function LoginPage() {
               <Label className="text-neutral-800" htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
-                  className="border-neutral-300 bg-white pr-11 text-neutral-950"
+                  className="border-neutral-200 bg-[#fafaf8] pr-11 text-neutral-950"
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
@@ -134,7 +134,7 @@ export default function LoginPage() {
           {devBypassEnabled && (
             <div className="mt-6 border-t border-neutral-200 pt-5">
               <Button
-                className="w-full border-neutral-300 bg-neutral-50 text-neutral-800 shadow-none hover:bg-neutral-100 hover:text-neutral-950"
+                className="w-full border-neutral-200 bg-[#fafaf8] text-neutral-700 shadow-none hover:bg-neutral-100 hover:text-neutral-950"
                 type="button"
                 variant="outline"
                 disabled={isSubmitting}

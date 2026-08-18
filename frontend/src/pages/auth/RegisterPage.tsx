@@ -10,8 +10,8 @@ import {
 
 export default function RegisterPage() {
   return (
-    <div className="light flex min-h-screen items-center justify-center bg-[#f7f7f5] px-4 py-10 text-[#171717]">
-      <Card className="w-full max-w-[420px] rounded-none border-neutral-300 bg-white shadow-none">
+    <div className="light flex min-h-screen items-center justify-center bg-[#f5f5f3] px-4 py-10 text-[#202124]">
+      <Card className="w-full max-w-[420px] rounded-lg border-neutral-200/90 bg-white shadow-none">
         <CardHeader className="space-y-6 p-6 sm:p-8">
           <div>
             <p className="text-lg font-semibold tracking-tight">RL-ERP</p>

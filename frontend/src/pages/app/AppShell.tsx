@@ -3,6 +3,14 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { CommandPalette } from "@/components/common/CommandPalette"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -10,9 +18,26 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/auth.store"
 import {
-  Boxes, ChevronsLeft, ChevronsRight, ClipboardList, CreditCard, Factory,
-  LayoutDashboard, LogOut, Menu, Network, Package, Receipt, Search, Settings,
-  ShoppingCart, Truck, UserRoundCog, Users,
+  BarChart3,
+  Boxes,
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
+  ClipboardList,
+  CreditCard,
+  Factory,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Network,
+  Package,
+  Receipt,
+  Search,
+  Settings,
+  ShoppingCart,
+  Truck,
+  UserRoundCog,
+  Users,
 } from "lucide-react"
 
 interface NavItem {
@@ -58,6 +83,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Production", icon: Factory },
     ],
   },
+  { label: "Reporting", items: [{ label: "Reports", icon: BarChart3 }] },
   {
     label: "Administration",
     items: [
@@ -66,6 +92,10 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
 ]
+
+function openCommandPalette() {
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))
+}
 
 function SidebarContent({
   collapsed,
@@ -83,6 +113,11 @@ function SidebarContent({
   const navigate = useNavigate()
   const location = useLocation()
 
+  const handleLogout = () => {
+    logout()
+    navigate("/login", { replace: true })
+  }
+
   const renderNavItem = (item: NavItem) => {
     const isActive = item.path === location.pathname
     const content = (
@@ -92,12 +127,12 @@ function SidebarContent({
       </>
     )
     const itemClassName = cn(
-      "flex h-8 items-center gap-3 border-l-2 px-3 text-[13px] font-medium transition-colors",
-      collapsed && "justify-center px-2",
+      "flex h-9 items-center gap-3 rounded-md border-l-2 px-3 text-[13px] font-medium transition-colors",
+      collapsed && "justify-center rounded-md border-l-0 px-2",
       item.path
         ? isActive
-          ? "border-sidebar-primary bg-sidebar-accent text-sidebar-primary"
-          : "border-transparent text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          ? "border-sidebar-primary/35 bg-sidebar-accent/75 text-sidebar-primary"
+          : "border-transparent text-sidebar-foreground/70 hover:bg-sidebar-accent/45 hover:text-sidebar-foreground/90"
         : "cursor-not-allowed border-transparent text-sidebar-foreground/35",
     )
     const itemElement = item.path ? (
@@ -123,23 +158,24 @@ function SidebarContent({
 
   return (
     <div className="flex h-full flex-col bg-sidebar">
-      <div className={cn("flex h-14 shrink-0 items-center border-b border-sidebar-border px-4", collapsed && "justify-center px-2")}>
-        {collapsed ? (
-          <span className="text-base font-bold text-sidebar-primary">R</span>
-        ) : (
-          <div className="min-w-0">
-            <p className="text-base font-bold leading-5 tracking-tight text-sidebar-foreground">RL-ERP</p>
-            <p className="truncate text-[11px] leading-4 text-sidebar-foreground/55">Raman Laaminators</p>
+      <div className={cn("flex h-16 shrink-0 items-center border-b border-sidebar-border px-4", collapsed && "justify-center px-2")}>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
+          RL
+        </div>
+        {!collapsed && (
+          <div className="ml-3 min-w-0">
+            <p className="truncate text-[13px] font-semibold leading-4 text-sidebar-foreground">Raman Laaminators</p>
+            <p className="text-[11px] leading-4 text-sidebar-foreground/55">RL-ERP</p>
           </div>
         )}
       </div>
 
       <ScrollArea className="flex-1">
-        <nav className="space-y-4 px-2 py-3">
+        <nav className="space-y-3 px-2 py-3">
           {NAV_SECTIONS.map((section) => (
             <div key={section.label}>
               {!collapsed && (
-                <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/45">
+                <p className="mb-1 px-3 text-[10px] font-medium uppercase tracking-[0.1em] text-sidebar-foreground/40">
                   {section.label}
                 </p>
               )}
@@ -152,14 +188,14 @@ function SidebarContent({
       <div className="shrink-0 border-t border-sidebar-border p-3">
         <div className={cn("flex items-center gap-2", collapsed && "justify-center")}>
           <Avatar className="h-8 w-8 border border-sidebar-border">
-            <AvatarFallback className="bg-sidebar-accent text-xs font-semibold text-sidebar-foreground">
+            <AvatarFallback className="bg-card text-xs font-semibold text-sidebar-foreground">
               {user?.username?.charAt(0)?.toUpperCase() ?? "U"}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-medium text-sidebar-foreground">{user?.username ?? "User"}</p>
-              <p className="truncate text-[11px] uppercase tracking-wide text-sidebar-foreground/50">{user?.role ?? ""}</p>
+              <p className="truncate text-[10px] uppercase tracking-[0.08em] text-sidebar-foreground/50">{user?.role ?? ""}</p>
             </div>
           )}
           {collapsible && (
@@ -171,15 +207,7 @@ function SidebarContent({
         {!collapsed && (
           <>
             <Separator className="my-2 bg-sidebar-border" />
-            <Button
-              className="h-8 w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                logout()
-                navigate("/login", { replace: true })
-              }}
-            >
+            <Button className="h-8 w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground" variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               Log out
             </Button>
@@ -194,48 +222,90 @@ export default function AppShell() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
+  const navigate = useNavigate()
+  const dateLabel = new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date())
+
+  const handleLogout = () => {
+    logout()
+    navigate("/login", { replace: true })
+  }
 
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex h-screen overflow-hidden bg-background text-foreground">
-        <aside className={cn("hidden shrink-0 border-r border-sidebar-border transition-[width] duration-200 md:block", collapsed ? "w-[52px]" : "w-[232px]")}>
+        <aside className={cn("hidden shrink-0 border-r border-sidebar-border/70 transition-[width] duration-200 md:block", collapsed ? "w-[56px]" : "w-[224px]")}>
           <SidebarContent collapsed={collapsed} onToggle={() => setCollapsed((previous) => !previous)} />
         </aside>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-3 sm:px-4">
+            <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border-subtle bg-card px-3 sm:px-5">
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden" aria-label="Open navigation">
-                  <Menu className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-9 w-9 md:hidden" aria-label="Open navigation">
+                  <Menu className="h-[18px] w-[18px]" />
                 </Button>
               </SheetTrigger>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold md:text-base">Dashboard</p>
-                <p className="hidden text-[11px] text-muted-foreground sm:block">Operational overview</p>
-              </div>
+              <span className="text-sm font-semibold md:hidden">RL-ERP</span>
+
               <Button
                 variant="outline"
-                size="sm"
-                className="hidden w-56 justify-start gap-2 bg-background text-xs font-normal text-muted-foreground lg:flex"
-                onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+                className="hidden h-10 max-w-[620px] flex-1 justify-start gap-3 rounded-lg border-border-subtle bg-secondary/65 px-4 text-[13px] font-normal text-muted-foreground shadow-none md:flex"
+                onClick={openCommandPalette}
               >
-                <Search className="h-3.5 w-3.5" />
-                <span className="flex-1 text-left">Search pages and actions</span>
-                <kbd className="border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium">⌘K</kbd>
+                <Search className="h-4 w-4" />
+                <span className="flex-1 text-left">Search products, customers, orders...</span>
+                <kbd className="border-l border-border-subtle pl-3 text-[10px] font-normal text-muted-foreground/70">⌘K</kbd>
               </Button>
-              <div className="flex items-center gap-2 border-l border-border pl-3">
-                <Avatar className="h-7 w-7 border border-border">
-                  <AvatarFallback className="bg-muted text-[11px] font-semibold">{user?.username?.charAt(0)?.toUpperCase() ?? "U"}</AvatarFallback>
-                </Avatar>
-                <span className="hidden max-w-40 truncate text-xs text-muted-foreground sm:inline">
-                  {user ? `${user.username} · ${user.role}` : "User"}
-                </span>
+
+              <div className="ml-auto flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-9 w-9 md:hidden" onClick={openCommandPalette} aria-label="Open search">
+                  <Search className="h-[18px] w-[18px]" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 rounded-md p-1.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30" aria-label="Open user menu">
+                      <Avatar className="h-8 w-8 border border-border">
+                        <AvatarFallback className="bg-foreground text-[11px] font-semibold text-background">
+                          {user?.username?.charAt(0)?.toUpperCase() ?? "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden min-w-0 sm:block">
+                        <span className="block max-w-32 truncate text-xs font-medium">{user?.username ?? "User"}</span>
+                        <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">{user?.role ?? ""}</span>
+                      </span>
+                      <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground sm:block" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>
+                      <span className="block text-xs font-medium">{user?.username ?? "User"}</span>
+                      <span className="block text-[10px] font-normal uppercase tracking-wide text-muted-foreground">{user?.role ?? ""}</span>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={handleLogout}>
+                      <LogOut className="h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </header>
 
+            <div className="flex h-12 shrink-0 items-center border-b border-border-subtle bg-card px-4 sm:px-6">
+              <div className="flex min-w-0 items-center gap-2">
+                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                <span className="truncate text-sm font-medium">Dashboard</span>
+              </div>
+              <span className="ml-auto text-xs text-muted-foreground">Today · {dateLabel}</span>
+            </div>
+
             <main className="min-w-0 flex-1 overflow-auto">
-              <div className="mx-auto max-w-[1440px] p-4 md:p-5 lg:p-6"><Outlet /></div>
+              <div className="mx-auto max-w-[1440px] p-4 sm:p-5 lg:p-6"><Outlet /></div>
             </main>
           </div>
 

@@ -105,8 +105,8 @@ Auth via `HTTPBearer` JWT. RBAC via `require_roles()` / `require_admin()`.
 |---|---|---|
 | Landing page (marketing) | `/` | ✅ Fully implemented |
 | Login / Access information | `/login`, `/register` | ✅ Responsive login and administrator-managed access guidance |
-| AppShell (sidebar + topbar) | `/app/*` | ✅ Responsive light-first ERP shell; future module navigation is disabled until routes exist |
-| Dashboard page | `/app/dashboard` | 🟡 Operational UI foundation with hardcoded zero/empty states; backend data is not connected |
+| AppShell (sidebar + topbar) | `/app/*` | ✅ Responsive light-first ERP shell with command search, context bar, and disabled future navigation |
+| Dashboard page | `/app/dashboard` | 🟡 Asymmetric operational UI foundation with zero/empty states; backend data is not connected |
 | All ERP module pages | `/app/products` etc. | 🔴 Missing entirely |
 
 ### Future Navigation
