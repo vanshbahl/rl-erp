@@ -70,7 +70,7 @@ export function CommandPalette() {
   const handleLogout = useCallback(() => {
     setOpen(false)
     logout()
-    navigate("/")
+    navigate("/login", { replace: true })
   }, [logout, navigate])
 
   const navRoutes = ROUTES.filter((r) => r.group === "navigation")

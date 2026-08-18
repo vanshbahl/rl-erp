@@ -4,4 +4,5 @@ class TestUserRoutes:
         assert res.status_code == 200
         assert "username" in res.json()
         assert "email" in res.json()
+        assert "role" in res.json()
         assert "id" in res.json()

@@ -33,6 +33,7 @@ Welcome to the RL-ERP development team. This guide covers local setup, workflows
    SECRET_KEY=generate_a_secure_random_string
    ALGORITHM=HS256
    ACCESS_TOKEN_EXPIRE_MINUTES=1440
+   FRONTEND_ORIGINS=http://localhost:5173
    ```
 5. **Database Initialization:**
    Ensure your local PostgreSQL server is running and the `rlerp` database exists.
@@ -55,7 +56,7 @@ Welcome to the RL-ERP development team. This guide covers local setup, workflows
    npm install
    ```
 3. **Environment Variables:**
-   Copy `.env.example` to `.env` (ensure `VITE_API_URL=http://localhost:8000`).
+   Copy `.env.example` to `.env` (ensure `VITE_API_URL=http://localhost:8000`). The frontend uses this root URL directly; it does not add an API version prefix.
 4. **Run the development server:**
    ```bash
    npm run dev
@@ -119,5 +120,5 @@ Welcome to the RL-ERP development team. This guide covers local setup, workflows
 ## 6. Debugging & Troubleshooting
 - **Database Schema Sync Issues:** If you get `relation does not exist` errors, your database is out of sync. Run `alembic upgrade head`. If a migration was messed up locally, you may need to recreate the local DB and rerun migrations.
 - **JWT Errors:** If you get `401 Unauthorized` constantly, check your `.env` file to ensure `SECRET_KEY` is set properly and the token hasn't expired.
-- **Frontend CORS Errors:** The backend does not yet have CORS middleware configured. Until it is added, all cross-origin requests from `localhost:5173` will be blocked by the browser. This is a P0 blocker.
-- **Frontend API 404s:** The Axios client is configured with a `/api/v1` base path but the backend has no versioning prefix. All requests will 404 until this is aligned. This is a P0 blocker.
+- **Frontend CORS Errors:** Ensure the frontend origin is included in the backend `FRONTEND_ORIGINS` setting (comma-separated for multiple origins).
+- **Frontend API 404s:** Verify `VITE_API_URL` is the backend root URL, such as `http://localhost:8000`, without `/api/v1`.

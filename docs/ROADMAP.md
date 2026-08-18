@@ -4,34 +4,15 @@
 
 ---
 
-## P0 — Broken Foundations (Fix Before Anything Else)
+## P0 — Authentication & Integration Foundation — ✅ Complete
 
-These issues prevent any frontend development from proceeding and must be resolved first.
+- Configured CORS through `FRONTEND_ORIGINS` (default: `http://localhost:5173`).
+- Aligned the Axios base URL to the unversioned FastAPI routes.
+- Standardized the authenticated user as `{id, username, email, role}` and exposed `role` from `/users/me`.
+- Added explicit runtime dependencies for JWT, password hashing, Alembic, and email validation.
+- Added login/register pages, session restoration, protected routes, centralized 401 logout, and lightweight API error feedback.
 
-### P0.1 — CORS Middleware
-**Why:** The FastAPI backend has no `CORSMiddleware`. The browser will block every API call from `localhost:5173`.
-**Backend:** Add `fastapi.middleware.cors.CORSMiddleware` to `main.py` allowing the frontend origin.
-
-### P0.2 — Fix API Base URL
-**Why:** The Axios client points to `/api/v1` but the backend serves at `/`. Every single API call will receive a 404.
-**Frontend:** Remove `/api/v1` from `axios.ts` base URL, or add a versioned prefix to backend routes.
-
-### P0.3 — Fix Auth Store / User Model Mismatch
-**Why:** `auth.store.ts` has `User.full_name` but the backend returns `username`. AppShell renders `undefined`.
-**Frontend:** Update `User` interface in `auth.store.ts` to `{id: number, username: string, email: string, role: string}`.
-**Backend:** Update `GET /users/me` to return `role` field.
-
-### P0.4 — Fix requirements.txt
-**Why:** `backend/app/requirements.txt` is missing `passlib[bcrypt]`, `python-jose[cryptography]`, `alembic`, `email-validator`, and test tooling. Fresh clone + install will fail to run.
-**Backend:** Regenerate with `pip freeze > requirements.txt` from a working venv, or manually add the missing packages.
-
-### P0.5 — Add Login/Register Pages
-**Why:** There is no way to authenticate from the frontend. Without auth, no ERP feature can be accessed.
-**Frontend:** Create `LoginPage`, `RegisterPage` (or combine into one). Wire to `POST /auth/login` and `POST /auth/register`. On success, call `useAuthStore().login()`.
-
-### P0.6 — Add Route Guards
-**Why:** The `/app/*` routes are completely unprotected. Any unauthenticated user can access the dashboard.
-**Frontend:** Create a `ProtectedRoute` component that checks `useAuthStore().isAuthenticated` and redirects to `/login` if false.
+The next priority is P1.1 Products. The existing migration-chain issue remains outside this phase and must be resolved before a clean database bootstrap can be relied upon.
 
 ---
 

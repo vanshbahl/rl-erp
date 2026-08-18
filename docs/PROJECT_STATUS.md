@@ -9,8 +9,8 @@
 
 | Module | Backend | Frontend | Integration | Database | Overall |
 |---|---|---|---|---|---|
-| Auth (Login/Register) | ✅ | 🔴 | 🔴 | ✅ | ⚠️ |
-| User Management (RBAC) | ✅ | 🔴 | 🔴 | ✅ | ⚠️ |
+| Auth (Login/Register) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| User Management (RBAC) | ✅ | 🔴 | 🟡 | ✅ | 🟡 |
 | Products | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
 | Customers | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
 | Inventory | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
@@ -101,9 +101,9 @@ Auth via `HTTPBearer` JWT. RBAC via `require_roles()` / `require_admin()`.
 | Component | Path | Status |
 |---|---|---|
 | Landing page (marketing) | `/` | ✅ Fully implemented |
+| Login / Register | `/login`, `/register` | ✅ API-connected, responsive auth forms |
 | AppShell (sidebar + topbar) | `/app/*` | ✅ UI shell exists (no data) |
 | Dashboard page | `/app/dashboard` | 🟡 Static placeholder, hardcoded zeros |
-| Auth (login/register) | — | 🔴 Missing entirely |
 | All ERP module pages | `/app/products` etc. | 🔴 Missing entirely |
 
 ### Dead Navigation Links
@@ -124,16 +124,13 @@ These sidebar links are defined but have no corresponding routes or pages:
 
 ## Frontend ↔ Backend Integration
 
-### Critical Integration Breaks
-| Issue | Impact |
-|---|---|
-| axios.ts uses `/api/v1` prefix | Backend has no versioning — every API call 404s |
-| No login page exists | Cannot authenticate from UI |
-| No route guards | `/app/*` accessible without token |
-| Auth store User.full_name field | Backend has `username`, not `full_name` — AppShell shows undefined |
-| GET /users/me returns no `role` | Frontend cannot enforce RBAC |
+### Authentication Integration — ✅ Complete
+- Axios uses the configured backend root URL and injects persisted bearer tokens.
+- FastAPI CORS allows configured frontend origins (default: `http://localhost:5173`).
+- Login, registration, session restoration via `/users/me`, protected `/app/*` routes, and centralized 401 cleanup are implemented.
+- The authenticated user shape is `{id, username, email, role}` and AppShell displays username and role.
 
-All backend endpoints have no connected frontend UI.
+All non-auth ERP endpoints remain without connected frontend UI.
 
 ---
 
@@ -157,20 +154,14 @@ production_execution_items
 
 | # | Severity | Issue |
 |---|---|---|
-| 1 | Critical | axios.ts base URL `/api/v1` — backend serves at `/`, all calls 404 |
-| 2 | Critical | No login page — cannot authenticate from frontend |
-| 3 | Critical | Auth store `full_name` vs backend `username` mismatch |
-| 4 | High | No CORS middleware on backend — cross-origin calls blocked |
-| 5 | High | ORDER_DISPATCH/ORDER_CANCEL not in InventoryTransactionType enum |
-| 6 | High | GET /products/{id} returns inactive products; list endpoint does not |
-| 7 | Medium | N+1 queries in payment reports and PO list |
-| 8 | Medium | Manual inventory PUT doesn't write audit transaction |
-| 9 | Medium | GST hardcoded to 0 despite gst_rate field on products |
-| 10 | Medium | requirements.txt missing passlib, python-jose, alembic, email-validator |
-| 11 | Low | GET /users/me doesn't return `role` field |
-| 12 | Low | user_service.py is completely empty |
-| 13 | Low | No pagination on any list endpoint |
-| 14 | Low | datetime.utcnow() deprecated in Python 3.12+ |
+| 1 | High | ORDER_DISPATCH/ORDER_CANCEL not in InventoryTransactionType enum |
+| 2 | High | GET /products/{id} returns inactive products; list endpoint does not |
+| 3 | Medium | N+1 queries in payment reports and PO list |
+| 4 | Medium | Manual inventory PUT doesn't write audit transaction |
+| 5 | Medium | GST hardcoded to 0 despite gst_rate field on products |
+| 6 | Low | user_service.py is completely empty |
+| 7 | Low | No pagination on any list endpoint |
+| 8 | Low | datetime.utcnow() deprecated in Python 3.12+ |
 
 ---
 
@@ -178,9 +169,6 @@ production_execution_items
 
 | Category | Issue |
 |---|---|
-| Missing CORS | Frontend-backend cross-origin calls blocked |
-| No API versioning | Must align frontend base URL with backend |
-| Incomplete requirements.txt | Fresh installs will fail |
 | No pagination | All list endpoints return full tables |
 | No row-level locking | Race condition risk on concurrent inventory mutations |
 | GST not applied | Invoice tax always zero |

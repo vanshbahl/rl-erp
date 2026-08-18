@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Outlet, NavLink, useLocation } from "react-router-dom"
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { CommandPalette } from "@/components/common/CommandPalette"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,7 @@ import {
   ChevronsRight,
   Boxes,
   Receipt,
+  LogOut,
 } from "lucide-react"
 import { useAuthStore } from "@/stores/auth.store"
 
@@ -61,6 +62,8 @@ function SidebarContent({
   onToggle: () => void
 }) {
   const user = useAuthStore((s) => s.user)
+  const logout = useAuthStore((s) => s.logout)
+  const navigate = useNavigate()
   const location = useLocation()
 
   const renderNavItem = (item: NavItem) => {
@@ -130,11 +133,11 @@ function SidebarContent({
             <div className="flex items-center gap-2 min-w-0">
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="bg-sidebar-accent text-xs text-sidebar-foreground">
-                  {user?.full_name?.charAt(0)?.toUpperCase() ?? "U"}
+                  {user?.username?.charAt(0)?.toUpperCase() ?? "U"}
                 </AvatarFallback>
               </Avatar>
               <span className="truncate text-xs text-sidebar-foreground/70">
-                {user?.full_name ?? "User"}
+                {user ? `${user.username} · ${user.role}` : "User"}
               </span>
             </div>
           )}
@@ -151,6 +154,20 @@ function SidebarContent({
             )}
           </Button>
         </div>
+        {!collapsed && (
+          <Button
+            className="mt-2 w-full justify-start text-sidebar-foreground/70"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              logout()
+              navigate("/login", { replace: true })
+            }}
+          >
+            <LogOut className="h-4 w-4" />
+            Log out
+          </Button>
+        )}
       </div>
     </div>
   )

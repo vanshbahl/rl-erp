@@ -4,6 +4,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { Toaster } from "@/components/ui/sonner"
 import { queryClient } from "@/lib/query"
 import { ThemeProvider } from "@/app/ThemeProvider"
+import { AuthSession } from "@/features/auth/AuthSession"
 
 interface ProvidersProps {
   children: ReactNode
@@ -13,7 +14,7 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <AuthSession>{children}</AuthSession>
         <Toaster
           position="bottom-right"
           toastOptions={{
