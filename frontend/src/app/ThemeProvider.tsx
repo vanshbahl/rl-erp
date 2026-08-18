@@ -9,7 +9,7 @@ interface ThemeProviderState {
 }
 
 const initialState: ThemeProviderState = {
-  theme: "dark",
+  theme: "light",
   setTheme: () => null,
 }
 
@@ -17,8 +17,8 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
-  defaultTheme = "dark",
-  storageKey = "rl-erp-theme",
+  defaultTheme = "light",
+  storageKey = "rl-erp-theme-v2",
 }: {
   children: React.ReactNode
   defaultTheme?: Theme

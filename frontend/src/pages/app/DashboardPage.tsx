@@ -1,124 +1,101 @@
+import { EmptyState } from "@/components/common/EmptyState"
+import { PageHeader } from "@/components/common/PageHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import {
-  Package,
-  ShoppingCart,
-  Users,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react"
-import type { LucideIcon } from "lucide-react"
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
-type Stat = {
+const METRICS = [
+  { label: "Products", value: "0", detail: "Active products" },
+  { label: "Pending Orders", value: "0", detail: "Awaiting action" },
+  { label: "Low Stock", value: "0", detail: "Items below minimum" },
+  { label: "Outstanding Receivables", value: "₹0", detail: "Pending collection" },
+]
+
+interface DashboardPanelProps {
   title: string
-  value: string
-  change: string
-  trend: "up" | "down" | "neutral"
-  icon: LucideIcon
+  columns: string[]
+  emptyTitle: string
+  emptyDescription: string
 }
 
-const STATS: Stat[] = [
-  {
-    title: "Total Revenue",
-    value: "$0",
-    change: "+0%",
-    trend: "up" as const,
-    icon: TrendingUp,
-  },
-  {
-    title: "Products",
-    value: "0",
-    change: "0 active",
-    trend: "neutral" as const,
-    icon: Package,
-  },
-  {
-    title: "Orders",
-    value: "0",
-    change: "0 pending",
-    trend: "neutral" as const,
-    icon: ShoppingCart,
-  },
-  {
-    title: "Customers",
-    value: "0",
-    change: "0 new",
-    trend: "neutral" as const,
-    icon: Users,
-  },
-]
+function DashboardPanel({
+  title,
+  columns,
+  emptyTitle,
+  emptyDescription,
+}: DashboardPanelProps) {
+  return (
+    <Card className="min-w-0">
+      <CardHeader className="border-b border-border py-3">
+        <CardTitle className="text-[15px]">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              {columns.map((column) => (
+                <TableHead key={column}>{column}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody />
+        </Table>
+        <EmptyState title={emptyTitle} description={emptyDescription} />
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Welcome to RL-ERP. Connect your backend to see live data.
-        </p>
-      </div>
+    <div className="space-y-5">
+      <PageHeader title="Dashboard" description="Operational overview" />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STATS.map((stat) => (
-          <Card key={stat.title} className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                {stat.trend === "up" && (
-                  <ArrowUpRight className="h-3 w-3 text-success" />
-                )}
-                {stat.trend === "down" && (
-                  <ArrowDownRight className="h-3 w-3 text-destructive" />
-                )}
-                <span>{stat.change}</span>
-              </div>
-            </CardContent>
-          </Card>
+      <section aria-label="Key performance indicators" className="grid grid-cols-1 border-l border-t border-border min-[390px]:grid-cols-2 lg:grid-cols-4">
+        {METRICS.map((metric) => (
+          <div key={metric.label} className="min-w-0 border-b border-r border-border bg-card p-4">
+            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              {metric.label}
+            </p>
+            <p className="mt-2 text-2xl font-semibold leading-none tracking-tight" data-numeric>
+              {metric.value}
+            </p>
+            <p className="mt-2 truncate text-xs text-muted-foreground">{metric.detail}</p>
+          </div>
         ))}
-      </div>
+      </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-base">Recent Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-              <div className="text-center">
-                <ShoppingCart className="mx-auto mb-2 h-8 w-8 opacity-30" />
-                <p>No orders yet</p>
-                <Badge variant="secondary" className="mt-2 text-xs">
-                  Connect API
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-base">Low Stock Alerts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-              <div className="text-center">
-                <Package className="mx-auto mb-2 h-8 w-8 opacity-30" />
-                <p>No alerts</p>
-                <Badge variant="secondary" className="mt-2 text-xs">
-                  Connect API
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <section className="grid min-w-0 gap-4 lg:grid-cols-2">
+        <DashboardPanel
+          title="Recent Sales Orders"
+          columns={["Order", "Customer", "Status", "Amount"]}
+          emptyTitle="No sales orders found."
+          emptyDescription="Recent sales orders will appear here once they are available."
+        />
+        <DashboardPanel
+          title="Low Stock Alerts"
+          columns={["Product", "Available", "Minimum"]}
+          emptyTitle="No low stock alerts."
+          emptyDescription="Products below their minimum stock level will appear here."
+        />
+        <DashboardPanel
+          title="Outstanding Invoices"
+          columns={["Invoice", "Customer", "Outstanding"]}
+          emptyTitle="No outstanding invoices."
+          emptyDescription="Unpaid and partially paid invoices will appear here."
+        />
+        <DashboardPanel
+          title="Recent Activity"
+          columns={["Activity", "Reference", "Time"]}
+          emptyTitle="No recent activity."
+          emptyDescription="Operational updates will appear here when dashboard data is connected."
+        />
+      </section>
     </div>
   )
 }

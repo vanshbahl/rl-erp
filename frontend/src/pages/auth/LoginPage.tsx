@@ -65,10 +65,10 @@ export default function LoginPage() {
 
   return (
     <div className="light flex min-h-screen items-center justify-center bg-[#f7f7f5] px-4 py-10 text-[#171717]">
-      <Card className="w-full max-w-[420px] rounded-lg border-neutral-200 bg-white shadow-sm">
+      <Card className="w-full max-w-[420px] rounded-none border-neutral-300 bg-white shadow-none">
         <CardHeader className="space-y-6 p-6 sm:p-8">
           <div>
-            <p className="text-lg font-semibold tracking-tight">RL-ERP</p>
+            <p className="text-xl font-bold tracking-tight text-neutral-950">RL-ERP</p>
             <p className="mt-1 text-sm text-neutral-500">Raman Laaminators</p>
           </div>
           <div className="space-y-2">
@@ -134,7 +134,7 @@ export default function LoginPage() {
           {devBypassEnabled && (
             <div className="mt-6 border-t border-neutral-200 pt-5">
               <Button
-                className="w-full border-neutral-300 text-neutral-700"
+                className="w-full border-neutral-300 bg-neutral-50 text-neutral-800 shadow-none hover:bg-neutral-100 hover:text-neutral-950"
                 type="button"
                 variant="outline"
                 disabled={isSubmitting}

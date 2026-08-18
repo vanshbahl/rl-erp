@@ -105,14 +105,12 @@ Auth via `HTTPBearer` JWT. RBAC via `require_roles()` / `require_admin()`.
 |---|---|---|
 | Landing page (marketing) | `/` | ✅ Fully implemented |
 | Login / Access information | `/login`, `/register` | ✅ Responsive login and administrator-managed access guidance |
-| AppShell (sidebar + topbar) | `/app/*` | ✅ UI shell exists (no data) |
-| Dashboard page | `/app/dashboard` | 🟡 Static placeholder, hardcoded zeros |
+| AppShell (sidebar + topbar) | `/app/*` | ✅ Responsive light-first ERP shell; future module navigation is disabled until routes exist |
+| Dashboard page | `/app/dashboard` | 🟡 Operational UI foundation with hardcoded zero/empty states; backend data is not connected |
 | All ERP module pages | `/app/products` etc. | 🔴 Missing entirely |
 
-### Dead Navigation Links
-These sidebar links are defined but have no corresponding routes or pages:
-`/app/products`, `/app/customers`, `/app/suppliers`, `/app/purchases`, `/app/sales`,
-`/app/inventory`, `/app/invoices`, `/app/reports`, `/app/settings`
+### Future Navigation
+The shell shows the planned ERP hierarchy, but only Dashboard is currently navigable. Module entries remain disabled until their real Phase 1 routes and screens are implemented; the command palette does not expose dead routes.
 
 ### Infrastructure Available (mostly unused)
 - Axios client with auth token injection, 401 auto-redirect

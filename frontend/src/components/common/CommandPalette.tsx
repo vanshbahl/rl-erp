@@ -11,13 +11,6 @@ import {
 } from "@/components/ui/command"
 import {
   LayoutDashboard,
-  Package,
-  Users,
-  Truck,
-  ShoppingCart,
-  FileText,
-  BarChart3,
-  Settings,
   Search,
   LogOut,
 } from "lucide-react"
@@ -27,20 +20,10 @@ interface CommandRoute {
   label: string
   icon: React.ComponentType<{ className?: string }>
   path: string
-  group: "navigation" | "actions"
 }
 
 const ROUTES: CommandRoute[] = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/app/dashboard", group: "navigation" },
-  { label: "Products", icon: Package, path: "/app/products", group: "navigation" },
-  { label: "Customers", icon: Users, path: "/app/customers", group: "navigation" },
-  { label: "Suppliers", icon: Truck, path: "/app/suppliers", group: "navigation" },
-  { label: "Sales Orders", icon: ShoppingCart, path: "/app/sales", group: "navigation" },
-  { label: "Purchase Orders", icon: FileText, path: "/app/purchases", group: "navigation" },
-  { label: "Inventory", icon: Package, path: "/app/inventory", group: "navigation" },
-  { label: "Invoices", icon: FileText, path: "/app/invoices", group: "navigation" },
-  { label: "Reports", icon: BarChart3, path: "/app/reports", group: "navigation" },
-  { label: "Settings", icon: Settings, path: "/app/settings", group: "actions" },
+  { label: "Dashboard", icon: LayoutDashboard, path: "/app/dashboard" },
 ]
 
 export function CommandPalette() {
@@ -73,9 +56,6 @@ export function CommandPalette() {
     navigate("/login", { replace: true })
   }, [logout, navigate])
 
-  const navRoutes = ROUTES.filter((r) => r.group === "navigation")
-  const actionRoutes = ROUTES.filter((r) => r.group === "actions")
-
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput placeholder="Search pages, actions..." />
@@ -83,7 +63,7 @@ export function CommandPalette() {
         <CommandEmpty>No results found.</CommandEmpty>
 
         <CommandGroup heading="Navigation">
-          {navRoutes.map((route) => (
+          {ROUTES.map((route) => (
             <CommandItem
               key={route.path}
               onSelect={() => handleSelect(route.path)}
@@ -98,16 +78,6 @@ export function CommandPalette() {
         <CommandSeparator />
 
         <CommandGroup heading="Actions">
-          {actionRoutes.map((route) => (
-            <CommandItem
-              key={route.path}
-              onSelect={() => handleSelect(route.path)}
-              className="gap-3"
-            >
-              <route.icon className="h-4 w-4 text-muted-foreground" />
-              <span>{route.label}</span>
-            </CommandItem>
-          ))}
           <CommandItem onSelect={handleLogout} className="gap-3">
             <LogOut className="h-4 w-4 text-muted-foreground" />
             <span>Log out</span>
