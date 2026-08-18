@@ -26,7 +26,7 @@ flowchart TD
 - **Migrations:** Alembic (for versioned, safe database schema evolution and rollback support).
 - **Validation:** Pydantic V2 (for lightning-fast payload parsing and runtime type checking).
 - **Security:** Passlib (Bcrypt for password hashing) and Python-JOSE (JWT generation).
-- **Testing:** Pytest, Pytest-Asyncio, Factory-Boy (>99% coverage targeting business services).
+- **Testing:** Pytest with a dedicated `TEST_DATABASE_URL` fixture. Note: test dependencies are not yet captured in `requirements.txt`.
 
 ### Frontend
 - **Framework:** React 19 (Vite) for rapid build times and modern hooks.
@@ -112,7 +112,9 @@ The PostgreSQL database prioritizes strict relational integrity:
 - The frontend Axios interceptor catches these responses and dispatches Toast notifications to the user automatically.
 
 ## 10. Performance & Scaling Considerations
-- **Pagination:** All list endpoints must implement `skip` and `limit` to prevent loading thousands of records into memory.
+- **Pagination:** All list endpoints are intended to implement `skip` and `limit` query parameters. As of the current implementation, pagination is not yet applied to any endpoint — this is a known gap.
 - **Database Indexes:** Applied explicitly to highly-queried foreign keys (e.g., `customer_id` on orders, `product_id` on inventory) to speed up joins.
 - **Statelessness:** The backend holds no session state. It scales horizontally seamlessly by deploying multiple instances behind a load balancer, provided they point to the same PostgreSQL cluster.
-- **Concurrency:** Critical inventory mutations (dispatch, production execution) must be evaluated for race conditions, utilizing row-level database locks (`SELECT ... FOR UPDATE`) in future iterations to prevent overselling stock during simultaneous requests.
+- **Concurrency:** Critical inventory mutations (dispatch, production execution) have a known race condition risk. Row-level database locks (`SELECT ... FOR UPDATE`) are not yet implemented. This is a P3 priority.
+- **CORS:** The backend does not currently configure CORS middleware. This must be added before the frontend can make any cross-origin API requests. This is a P0 blocker.
+- **API Versioning:** The backend serves all routes at the root path (no `/api/v1` prefix). The frontend Axios client is configured to use `/api/v1`. These must be aligned as a P0 fix.

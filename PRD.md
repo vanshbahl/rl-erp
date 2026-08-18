@@ -70,20 +70,39 @@ Small and medium manufacturing businesses struggle with disjointed operational d
 4. **Active BOM Enforcement:** Only one BOM can be marked active per product at any given time.
 
 ## 9. Feature List (Current & Planned)
-- ✅ Customer & Supplier Management
-- ✅ Product & Inventory Module
-- ✅ End-to-End Sales Order & Dispatch
-- ✅ Purchase Orders & Goods Receipt
-- ✅ BOM & Production Execution
-- ✅ Invoicing & Payments Engine
-- ✅ Service Layer Backend Architecture
-- ⏳ Authentication (JWT) & RBAC
-- ⏳ Dashboard Shell & Core UI
-- ⏳ Analytics & Reporting (Cost variations, general ledger)
+
+### Backend (Complete — all tested)
+- ✅ Customer & Supplier Management (CRUD + soft-delete)
+- ✅ Product Management (types, standard cost, supplier links)
+- ✅ Inventory Tracking (quantity, minimum stock, low-stock alerts)
+- ✅ Inventory Transaction Ledger (immutable audit trail)
+- ✅ End-to-End Sales Order & Dispatch (state machine, stock deduction)
+- ✅ Purchase Orders & Goods Receipt (partial receipt support)
+- ✅ BOM Management (versioned, one active per product)
+- ✅ Production Execution & Rollback (atomic, with consumption overrides)
+- ✅ Invoice Generation (from dispatched orders)
+- ✅ Payments Engine (multi-method, AR aging reports)
+- ✅ Authentication (JWT/bcrypt) & RBAC (admin/manager/staff)
+- ✅ User Management (admin-only CRUD, role assignment)
+
+### Frontend (In Progress)
+- ✅ Marketing Landing Page
+- 🟡 App Shell (sidebar navigation — no module pages wired)
+- 🟡 Dashboard (static placeholder — no live data)
+- 🔴 Login / Register Pages
+- 🔴 All ERP Module Pages (Products, Orders, Inventory, etc.)
+
+### Known Gaps (Backend)
+- ⚠️ GST/tax calculation not applied — invoice tax always 0
+- ⚠️ Manual inventory adjustment has no audit trail
+- ⚠️ No pagination on any list endpoint
+- ⚠️ No CORS middleware (blocks all frontend requests)
 
 ## 10. Future Roadmap
-- Production Costing (Actual vs Standard variations).
-- Complete comprehensive Inventory Ledger view.
+- Production Costing (Actual vs Standard cost variance).
+- GST per-line-item calculation on invoices.
+- Inventory Ledger view (full transaction history per product).
+- Row-level database locking for concurrent inventory operations.
 - Multi-company and Multi-warehouse support.
 - Automated email/WhatsApp notifications.
 - General Ledger & Expense management.

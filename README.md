@@ -188,12 +188,25 @@ All API endpoints (except public health checks and login/register) are secured v
 
 ## 📈 Project Status & Roadmap
 
-The backend `v1.0` is complete and fully tested. The frontend shell and core modules are currently under active development.
+> **Current State (as of 2026-08-18):** Backend is functionally complete and tested across all 12 domain modules. The frontend is in its early shell stage — only the landing page and a static dashboard exist. No ERP module pages are implemented yet, and there are P0 integration blockers that must be fixed before frontend development can proceed.
 
-### Upcoming
-- Complete Frontend Dashboard Shell & Sidebar Navigation.
-- Build React Modules for Inventory, Orders, and Production.
-- Implement Production Costing (Actual vs Standard variations) in the backend.
+| Area | Status |
+|---|---|
+| Backend (all modules) | ✅ Complete and tested |
+| Database schema | ✅ Complete (12 migrations) |
+| Frontend shell / landing | 🟡 Partial (no module pages) |
+| Frontend ERP modules | 🔴 Not started |
+| Frontend ↔ Backend integration | 🔴 Blocked (CORS, URL mismatch, no auth UI) |
+
+See **[docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md)** for the full module matrix and bug list.
+
+See **[docs/ROADMAP.md](docs/ROADMAP.md)** for the prioritized implementation plan.
+
+### Known P0 Blockers
+1. No CORS middleware on backend — all frontend API calls blocked by browser
+2. Frontend Axios base URL uses `/api/v1` — backend serves at `/` (all calls 404)
+3. No login/register page exists
+4. Auth store type mismatch (`full_name` vs `username`)
 
 ---
 

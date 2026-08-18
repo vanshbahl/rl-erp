@@ -108,9 +108,8 @@ Welcome to the RL-ERP development team. This guide covers local setup, workflows
 - **Styling:** Use Tailwind CSS utility classes. Avoid writing custom `.css` files unless absolutely necessary for complex animations.
 
 ## 5. Testing Strategy
-- The backend aims for >99% test coverage.
-- The `TEST_DATABASE_URL` is used automatically by Pytest fixtures.
-- Every test runs in an isolated transaction that rolls back afterward, ensuring tests never pollute the database.
+- The backend uses a dedicated `TEST_DATABASE_URL` via Pytest fixtures. Every test runs in an isolated transaction that rolls back afterward, ensuring tests never pollute the database.
+- **Note:** Test dependencies (`pytest`, `pytest-asyncio`, `factory-boy`, `httpx`) are not currently in `requirements.txt` — install them separately for a development environment.
 - **To run tests:**
   ```bash
   cd backend
@@ -120,4 +119,5 @@ Welcome to the RL-ERP development team. This guide covers local setup, workflows
 ## 6. Debugging & Troubleshooting
 - **Database Schema Sync Issues:** If you get `relation does not exist` errors, your database is out of sync. Run `alembic upgrade head`. If a migration was messed up locally, you may need to recreate the local DB and rerun migrations.
 - **JWT Errors:** If you get `401 Unauthorized` constantly, check your `.env` file to ensure `SECRET_KEY` is set properly and the token hasn't expired.
-- **Frontend CORS Errors:** Ensure the FastAPI backend has CORS middleware configured to allow `http://localhost:5173`.
+- **Frontend CORS Errors:** The backend does not yet have CORS middleware configured. Until it is added, all cross-origin requests from `localhost:5173` will be blocked by the browser. This is a P0 blocker.
+- **Frontend API 404s:** The Axios client is configured with a `/api/v1` base path but the backend has no versioning prefix. All requests will 404 until this is aligned. This is a P0 blocker.

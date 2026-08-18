@@ -63,7 +63,7 @@ erDiagram
 ### 2.2 Product Master & Inventory
 - **`products`**: Defines all items in the system. Enforces a strict `product_type` enum (`RAW_MATERIAL`, `FINISHED_GOOD`, `SEMI_FINISHED`, `PACKAGING`, `CONSUMABLE`). Holds `standard_cost` for financial valuations.
 - **`inventory`**: A 1:1 mapping to `products`. Holds the absolute `quantity` currently in stock and `minimum_stock` for alerts.
-- **`inventory_transactions`**: The immutable ledger. Every mutation to the `inventory` table MUST write a row here. Uses `transaction_type` (`SALE`, `PURCHASE_RECEIPT`, `ADJUSTMENT`, `PRODUCTION_CONSUMPTION`, `PRODUCTION_OUTPUT`, `REVERSAL`, `ORDER_DISPATCH`, `ORDER_CANCEL`).
+- **`inventory_transactions`**: The immutable ledger. Every mutation to the `inventory` table MUST write a row here. Uses `transaction_type` enum values: `SALE`, `PURCHASE_RECEIPT`, `ADJUSTMENT`, `PRODUCTION_CONSUMPTION`, `PRODUCTION_OUTPUT`, `REVERSAL`. Additionally, the order dispatch flow writes `ORDER_DISPATCH` and `ORDER_CANCEL` as raw string values — these are NOT in the `InventoryTransactionType` enum and represent a known inconsistency. **Note:** Manual inventory adjustments via `PUT /inventory/{product_id}` do not currently write a transaction — a known audit gap.
 
 ### 2.3 Sales & Fulfillment
 - **`customers`**: Client companies. Supports soft-delete (`is_active`).
