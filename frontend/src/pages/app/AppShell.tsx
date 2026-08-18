@@ -65,8 +65,8 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: "Inventory",
     items: [
-      { label: "Products", icon: Package },
-      { label: "Inventory", icon: Boxes },
+      { label: "Products", icon: Package, path: "/app/products" },
+      { label: "Inventory", icon: Boxes, path: "/app/inventory" },
     ],
   },
   {
@@ -224,6 +224,11 @@ export default function AppShell() {
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const navigate = useNavigate()
+  const location = useLocation()
+  const contextItem = NAV_SECTIONS.flatMap((section) => section.items).find(
+    (item) => item.path === location.pathname,
+  )
+  const ContextIcon = contextItem?.icon ?? LayoutDashboard
   const dateLabel = new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
     month: "short",
@@ -298,8 +303,8 @@ export default function AppShell() {
 
             <div className="flex h-12 shrink-0 items-center border-b border-border-subtle bg-card px-4 sm:px-6">
               <div className="flex min-w-0 items-center gap-2">
-                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                <span className="truncate text-sm font-medium">Dashboard</span>
+                <ContextIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="truncate text-sm font-medium">{contextItem?.label ?? "Dashboard"}</span>
               </div>
               <span className="ml-auto text-xs text-muted-foreground">Today · {dateLabel}</span>
             </div>

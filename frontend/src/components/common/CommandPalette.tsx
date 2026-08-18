@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/command"
 import {
   LayoutDashboard,
+  Boxes,
+  Package,
   Search,
   LogOut,
 } from "lucide-react"
@@ -24,6 +26,8 @@ interface CommandRoute {
 
 const ROUTES: CommandRoute[] = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/app/dashboard" },
+  { label: "Products", icon: Package, path: "/app/products" },
+  { label: "Inventory", icon: Boxes, path: "/app/inventory" },
 ]
 
 export function CommandPalette() {

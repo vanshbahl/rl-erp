@@ -1,6 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.models.inventory import Inventory
+from app.models.inventory_transaction import InventoryTransaction
+from app.models.enums import InventoryTransactionType
 from app.models.product import Product
 from app.schemas.inventory import InventoryCreate, InventoryUpdate
 
@@ -82,8 +84,24 @@ class InventoryService:
                     detail="Inventory record not found"
                 )
 
-            for key, value in inventory_data.model_dump(exclude_unset=True).items():
+            updates = inventory_data.model_dump(exclude_unset=True)
+            quantity_change = None
+
+            if "quantity" in updates and updates["quantity"] is not None:
+                quantity_change = float(updates["quantity"]) - float(inventory.quantity)
+
+            for key, value in updates.items():
                 setattr(inventory, key, value)
+
+            if quantity_change is not None and quantity_change != 0:
+                db.add(
+                    InventoryTransaction(
+                        product_id=product_id,
+                        quantity_change=quantity_change,
+                        transaction_type=InventoryTransactionType.ADJUSTMENT.value,
+                        remarks="Manual inventory quantity adjustment",
+                    )
+                )
 
             db.commit()
             db.refresh(inventory)

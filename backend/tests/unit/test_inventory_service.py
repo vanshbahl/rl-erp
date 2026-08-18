@@ -14,6 +14,8 @@ Coverage targets:
 
 import pytest
 from app.models.inventory import Inventory
+from app.models.inventory_transaction import InventoryTransaction
+from app.models.enums import InventoryTransactionType
 from app.models.product import Product
 
 @pytest.mark.unit
@@ -140,6 +142,37 @@ class TestInventoryService:
         
         db.refresh(inv)
         assert inv.quantity == 25
+
+        transaction = (
+            db.query(InventoryTransaction)
+            .filter(InventoryTransaction.product_id == p.id)
+            .one()
+        )
+        assert transaction.quantity_change == 15
+        assert transaction.transaction_type == InventoryTransactionType.ADJUSTMENT.value
+        assert transaction.remarks == "Manual inventory quantity adjustment"
+
+    def test_update_minimum_stock_does_not_create_adjustment(self, client, admin_headers, db):
+        from tests.factories.models import make_product, make_inventory
+        product = make_product(db)
+        inventory = make_inventory(db, product_id=product.id, quantity=10, minimum_stock=5)
+
+        response = client.put(
+            f"/inventory/{product.id}",
+            json={"minimum_stock": 12},
+            headers=admin_headers,
+        )
+
+        assert response.status_code == 200
+        db.refresh(inventory)
+        assert inventory.quantity == 10
+        assert inventory.minimum_stock == 12
+        assert (
+            db.query(InventoryTransaction)
+            .filter(InventoryTransaction.product_id == product.id)
+            .count()
+            == 0
+        )
 
     def test_update_inventory_not_found(self, client, admin_headers):
         payload = {

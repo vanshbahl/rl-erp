@@ -11,9 +11,9 @@
 |---|---|---|---|---|---|
 | Auth (Login/Register) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | User Management (RBAC) | ✅ | 🔴 | 🟡 | ✅ | 🟡 |
-| Products | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
+| Products | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Customers | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
-| Inventory | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
+| Inventory | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Suppliers | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
 | Sales Orders | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
 | Invoices | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
@@ -21,7 +21,7 @@
 | Purchase Orders | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
 | BOM | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
 | Production Orders | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
-| Dashboard | 🔴 | 🟡 | 🔴 | N/A | 🔴 |
+| Dashboard | 🔴 | 🟡 | 🟡 | N/A | 🟡 |
 | Reports / Analytics | 🔴 | 🔴 | 🔴 | N/A | 🔴 |
 | Settings | 🔴 | 🔴 | 🔴 | N/A | 🔴 |
 
@@ -56,9 +56,9 @@ Auth via `HTTPBearer` JWT. RBAC via `require_roles()` / `require_admin()`.
 - Full CRUD + soft-delete via `/deactivate`
 - Fields: company_name, contact_person, phone, email, gst_number, address, city, state, pincode
 
-### Inventory (`/inventory`) — ✅ Complete (with audit gap)
+### Inventory (`/inventory`) — ✅ Complete
 - List, low-stock (filterable by product_type and supplier_id), single item
-- `PUT /inventory/{product_id}` — arbitrary quantity override does NOT write an audit transaction (breaks immutable ledger contract)
+- `PUT /inventory/{product_id}` writes an `ADJUSTMENT` ledger transaction for quantity changes in the same database transaction
 
 ### Suppliers (`/suppliers`) — ✅ Complete
 - Full CRUD + soft-delete
@@ -132,7 +132,11 @@ The shell shows the planned ERP hierarchy, but only Dashboard is currently navig
 - An optional local-only skip-login control calls the guarded backend endpoint and creates a normal administrator JWT session.
 - The authenticated user shape is `{id, username, email, role}` and AppShell displays username and role.
 
-All non-auth ERP endpoints remain without connected frontend UI.
+### Products and Inventory Integration — ✅ Complete
+- `/app/products` provides real product listing, filtering, creation, editing, details, and soft deactivation.
+- `/app/inventory` provides real stock listing, low-stock filtering, and audited manual quantity/minimum-stock adjustment.
+- Dashboard active-product and low-stock metrics, plus the low-stock panel, use persisted API data.
+- Sales, customer, receivable, and invoice dashboard sections remain unconnected and do not display fabricated data.
 
 ---
 
@@ -159,11 +163,10 @@ production_execution_items
 | 1 | High | ORDER_DISPATCH/ORDER_CANCEL not in InventoryTransactionType enum |
 | 2 | High | GET /products/{id} returns inactive products; list endpoint does not |
 | 3 | Medium | N+1 queries in payment reports and PO list |
-| 4 | Medium | Manual inventory PUT doesn't write audit transaction |
-| 5 | Medium | GST hardcoded to 0 despite gst_rate field on products |
-| 6 | Low | user_service.py is completely empty |
-| 7 | Low | No pagination on any list endpoint |
-| 8 | Low | datetime.utcnow() deprecated in Python 3.12+ |
+| 4 | Medium | GST hardcoded to 0 despite gst_rate field on products |
+| 5 | Low | user_service.py is completely empty |
+| 6 | Low | No pagination on any list endpoint |
+| 7 | Low | datetime.utcnow() deprecated in Python 3.12+ |
 
 ---
 
@@ -177,7 +180,7 @@ production_execution_items
 | Enum inconsistency | ORDER_DISPATCH/ORDER_CANCEL raw strings |
 | Empty migrations | 3 no-op migration files |
 | N+1 queries | Payment reports, PO list |
-| No domain types in frontend | types/api.ts has no Product, Order, Customer interfaces |
+| Partial domain types in frontend | Product and Inventory types exist; remaining ERP modules are not typed |
 | No route guards | Unauthenticated access to /app/* |
 | Dead stubs | user_service.py, features/auth/index.ts, hooks/index.ts empty |
-| Command Palette stub | Rendered but contains no commands or data |
+| Command Palette partial | Dashboard, Products, Inventory, and logout are connected; future modules remain unavailable |

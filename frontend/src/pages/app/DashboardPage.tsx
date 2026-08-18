@@ -5,10 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useLowStockQuery } from "@/features/inventory/hooks"
+import { useProductsQuery } from "@/features/products/hooks"
+import { useMemo } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Boxes,
   CreditCard,
@@ -16,7 +21,6 @@ import {
   PackagePlus,
   ShoppingCart,
   UserPlus,
-  Users,
 } from "lucide-react"
 
 interface DashboardPanelProps {
@@ -55,6 +59,20 @@ function DashboardPanel({
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate()
+  const productsQuery = useProductsQuery()
+  const lowStockQuery = useLowStockQuery()
+  const productsById = useMemo(
+    () => new Map((productsQuery.data ?? []).map((product) => [product.id, product])),
+    [productsQuery.data],
+  )
+  const lowStockItems = useMemo(
+    () => (lowStockQuery.data ?? []).filter((item) => productsById.has(item.product_id)),
+    [lowStockQuery.data, productsById],
+  )
+  const productsValue = productsQuery.isLoading ? "…" : productsQuery.isError ? "—" : String(productsQuery.data?.length ?? 0)
+  const lowStockValue = lowStockQuery.isLoading || productsQuery.isLoading ? "…" : lowStockQuery.isError || productsQuery.isError ? "—" : String(lowStockItems.length)
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -94,11 +112,11 @@ export default function DashboardPage() {
             </div>
             <div className="flex min-h-18 items-center justify-between rounded-md bg-secondary/75 p-3.5">
               <div>
-                <p className="text-xs text-muted-foreground">Active customers</p>
-                <p className="mt-1 text-2xl font-semibold leading-none" data-numeric>0</p>
-                <p className="mt-1.5 text-[11px] text-muted-foreground">Customer records</p>
+                <p className="text-xs text-muted-foreground">Active products</p>
+                <p className="mt-1 text-2xl font-semibold leading-none" data-numeric>{productsValue}</p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">Product records</p>
               </div>
-              <Users className="h-[18px] w-[18px] text-muted-foreground" />
+              <PackagePlus className="h-[18px] w-[18px] text-muted-foreground" />
             </div>
           </div>
         </Card>
@@ -115,8 +133,8 @@ export default function DashboardPage() {
               </div>
             </div>
             <div>
-              <p className="text-[30px] font-semibold leading-none tracking-tight" data-numeric>0</p>
-              <p className="mt-2 text-xs text-muted-foreground">No items require attention</p>
+              <p className="text-[30px] font-semibold leading-none tracking-tight" data-numeric>{lowStockValue}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{lowStockItems.length ? `${lowStockItems.length} item${lowStockItems.length === 1 ? " requires" : "s require"} attention` : "No items require attention"}</p>
             </div>
           </CardContent>
         </Card>
@@ -129,12 +147,29 @@ export default function DashboardPage() {
           emptyTitle="No sales orders yet."
           className="lg:col-span-8"
         />
-        <DashboardPanel
-          title="Low Stock"
-          columns={["Product", "Available", "Minimum"]}
-          emptyTitle="No low stock items."
-          className="lg:col-span-4"
-        />
+        <Card className="min-w-0 overflow-hidden lg:col-span-4">
+          <CardHeader className="flex-row items-center justify-between border-b border-border-subtle px-4 py-3.5">
+            <CardTitle className="text-[14px]">Low Stock</CardTitle>
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => navigate("/app/inventory")}>View inventory</Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Product</TableHead><TableHead>Available</TableHead><TableHead>Minimum</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {lowStockItems.slice(0, 5).map((item) => {
+                  const product = productsById.get(item.product_id)
+                  if (!product) return null
+                  return <TableRow key={item.id} className="cursor-pointer" onClick={() => navigate("/app/inventory")}>
+                    <TableCell className="max-w-36 truncate font-medium">{product.name}</TableCell>
+                    <TableCell data-numeric>{item.quantity} {product.unit || ""}</TableCell>
+                    <TableCell data-numeric>{item.minimum_stock} {product.unit || ""}</TableCell>
+                  </TableRow>
+                })}
+              </TableBody>
+            </Table>
+            {!lowStockQuery.isLoading && !productsQuery.isLoading && lowStockItems.length === 0 && <EmptyState title={lowStockQuery.isError || productsQuery.isError ? "Unable to load low stock." : "No low stock items."} className="min-h-32" />}
+          </CardContent>
+        </Card>
 
         <DashboardPanel
           title="Outstanding Invoices"
@@ -148,7 +183,7 @@ export default function DashboardPage() {
             <CardTitle className="text-[14px]">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-2 p-4 lg:grid-cols-1">
-            <Button variant="outline" className="h-9 justify-start border-border-subtle bg-secondary/65 text-xs text-muted-foreground disabled:opacity-75" disabled>
+            <Button variant="outline" className="h-9 justify-start border-border-subtle bg-secondary/65 text-xs" onClick={() => navigate("/app/products") }>
               <PackagePlus className="h-4 w-4" />
               New Product
             </Button>

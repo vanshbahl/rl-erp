@@ -8,6 +8,8 @@ const LandingPage = lazy(() => import("@/pages/public/LandingPage"))
 
 const AppShell = lazy(() => import("@/pages/app/AppShell"))
 const DashboardPage = lazy(() => import("@/pages/app/DashboardPage"))
+const ProductsPage = lazy(() => import("@/features/products/pages/ProductsPage"))
+const InventoryPage = lazy(() => import("@/features/inventory/pages/InventoryPage"))
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"))
 const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage"))
 
@@ -34,6 +36,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="dashboard" replace /> },
           { path: "dashboard", element: <DashboardPage /> },
+          { path: "products", element: <ProductsPage /> },
+          { path: "inventory", element: <InventoryPage /> },
         ],
       },
     ],
