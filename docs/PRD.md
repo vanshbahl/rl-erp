@@ -96,12 +96,15 @@ The primary operational account is an administrator. Standard accounts are creat
 
 ### Frontend (In Progress)
 - ✅ Marketing Landing Page
-- 🟡 App Shell (Dashboard, Products, and Inventory routes wired; remaining modules unavailable)
-- 🟡 Dashboard (live active-product and low-stock data; sales and finance areas remain placeholders)
+- 🟡 App Shell (all Phase 1 routes wired; later modules unavailable)
+- ✅ Dashboard (live product, low-stock, customer, order, receivable, and invoice data)
 - ✅ Login / Administrator-managed access Pages
 - ✅ Product Management Page (create, edit, detail, filter, deactivate)
 - ✅ Inventory Page (stock status, low-stock filter, audited manual adjustment)
-- 🔴 Remaining ERP Module Pages (Orders, Customers, Suppliers, Invoices, etc.)
+- ✅ Customer and Supplier Management Pages
+- ✅ Sales Order Page (multi-line creation, workflow transitions, dispatch/cancel integrity)
+- ✅ Invoice and Payment Pages (generation, issuance, partial/full payment lifecycle)
+- 🔴 Remaining ERP Module Pages (Purchase Orders, BOMs, Production, Reports, Settings)
 
 ### Known Gaps (Backend)
 - ⚠️ GST/tax calculation not applied — invoice tax always 0

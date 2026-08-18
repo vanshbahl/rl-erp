@@ -17,6 +17,7 @@ import pytest
 from app.models.order import Order
 from app.models.inventory import Inventory
 from app.models.inventory_transaction import InventoryTransaction
+from app.models.enums import InventoryTransactionType
 
 
 @pytest.mark.unit
@@ -140,7 +141,7 @@ class TestOrderService:
         assert inv.quantity == 40
         
         # Verify transaction logging
-        transaction = db.query(InventoryTransaction).filter_by(order_id=order_id, transaction_type="ORDER_DISPATCH").first()
+        transaction = db.query(InventoryTransaction).filter_by(order_id=order_id, transaction_type=InventoryTransactionType.ORDER_DISPATCH.value).first()
         assert transaction is not None
         assert transaction.quantity_change == -10
         assert transaction.product_id == product.id
@@ -208,7 +209,7 @@ class TestOrderService:
         assert inv.quantity == 50
         
         # Verify transaction
-        transaction = db.query(InventoryTransaction).filter_by(order_id=order_id, transaction_type="ORDER_CANCEL").first()
+        transaction = db.query(InventoryTransaction).filter_by(order_id=order_id, transaction_type=InventoryTransactionType.ORDER_CANCEL.value).first()
         assert transaction is not None
         assert transaction.quantity_change == 10
 

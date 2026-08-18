@@ -13,6 +13,11 @@ import {
   LayoutDashboard,
   Boxes,
   Package,
+  Users,
+  ShoppingCart,
+  Receipt,
+  CreditCard,
+  Truck,
   Search,
   LogOut,
 } from "lucide-react"
@@ -28,6 +33,11 @@ const ROUTES: CommandRoute[] = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/app/dashboard" },
   { label: "Products", icon: Package, path: "/app/products" },
   { label: "Inventory", icon: Boxes, path: "/app/inventory" },
+  { label: "Customers", icon: Users, path: "/app/customers" },
+  { label: "Sales Orders", icon: ShoppingCart, path: "/app/sales" },
+  { label: "Invoices", icon: Receipt, path: "/app/invoices" },
+  { label: "Payments", icon: CreditCard, path: "/app/payments" },
+  { label: "Suppliers", icon: Truck, path: "/app/suppliers" },
 ]
 
 export function CommandPalette() {

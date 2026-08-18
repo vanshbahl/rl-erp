@@ -11,6 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useLowStockQuery } from "@/features/inventory/hooks"
+import { useCustomersQuery } from "@/features/customers/hooks"
+import { useOrdersQuery } from "@/features/orders/hooks"
+import { formatOrderStatus } from "@/features/orders/types"
+import { useOutstandingQuery } from "@/features/payments/hooks"
 import { useProductsQuery } from "@/features/products/hooks"
 import { useMemo } from "react"
 import { useNavigate } from "react-router-dom"
@@ -23,45 +27,13 @@ import {
   UserPlus,
 } from "lucide-react"
 
-interface DashboardPanelProps {
-  title: string
-  columns: string[]
-  emptyTitle: string
-  className?: string
-}
-
-function DashboardPanel({
-  title,
-  columns,
-  emptyTitle,
-  className,
-}: DashboardPanelProps) {
-  return (
-    <Card className={`min-w-0 overflow-hidden ${className ?? ""}`}>
-      <CardHeader className="border-b border-border-subtle px-4 py-3.5">
-        <CardTitle className="text-[14px]">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              {columns.map((column) => (
-                <TableHead key={column}>{column}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody />
-        </Table>
-        <EmptyState title={emptyTitle} className="min-h-32" />
-      </CardContent>
-    </Card>
-  )
-}
-
 export default function DashboardPage() {
   const navigate = useNavigate()
   const productsQuery = useProductsQuery()
   const lowStockQuery = useLowStockQuery()
+  const customersQuery = useCustomersQuery()
+  const ordersQuery = useOrdersQuery()
+  const outstandingQuery = useOutstandingQuery()
   const productsById = useMemo(
     () => new Map((productsQuery.data ?? []).map((product) => [product.id, product])),
     [productsQuery.data],
@@ -72,6 +44,12 @@ export default function DashboardPage() {
   )
   const productsValue = productsQuery.isLoading ? "…" : productsQuery.isError ? "—" : String(productsQuery.data?.length ?? 0)
   const lowStockValue = lowStockQuery.isLoading || productsQuery.isLoading ? "…" : lowStockQuery.isError || productsQuery.isError ? "—" : String(lowStockItems.length)
+  const orderCount = ordersQuery.isLoading ? "…" : ordersQuery.isError ? "—" : String(ordersQuery.data?.length ?? 0)
+  const pendingOrders = (ordersQuery.data ?? []).filter((order) => order.status === "PENDING").length
+  const activeCustomers = customersQuery.isLoading ? "…" : customersQuery.isError ? "—" : String(customersQuery.data?.length ?? 0)
+  const receivables = (outstandingQuery.data ?? []).reduce((sum, item) => sum + item.outstanding_amount, 0)
+  const receivablesValue = outstandingQuery.isLoading ? "…" : outstandingQuery.isError ? "—" : `₹${receivables.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
+  const recentOrders = useMemo(() => [...(ordersQuery.data ?? [])].sort((a, b) => b.id - a.id).slice(0, 5), [ordersQuery.data])
 
   return (
     <div className="space-y-5">
@@ -94,8 +72,8 @@ export default function DashboardPage() {
               </div>
             </div>
             <div>
-              <p className="text-[30px] font-semibold leading-none tracking-tight" data-numeric>₹0</p>
-              <p className="mt-2 text-xs text-muted-foreground">0 open invoices</p>
+              <p className="text-[30px] font-semibold leading-none tracking-tight" data-numeric>{receivablesValue}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{outstandingQuery.isLoading ? "Loading invoices..." : `${outstandingQuery.data?.length ?? 0} open invoice${(outstandingQuery.data?.length ?? 0) === 1 ? "" : "s"}`}</p>
             </div>
           </CardContent>
         </Card>
@@ -105,16 +83,16 @@ export default function DashboardPage() {
             <div className="flex min-h-18 items-center justify-between rounded-md bg-secondary/75 p-3.5">
               <div>
                 <p className="text-xs text-muted-foreground">Sales orders</p>
-                <p className="mt-1 text-2xl font-semibold leading-none" data-numeric>0</p>
-                <p className="mt-1.5 text-[11px] text-muted-foreground">0 pending</p>
+                <p className="mt-1 text-2xl font-semibold leading-none" data-numeric>{orderCount}</p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">{pendingOrders} pending</p>
               </div>
               <ShoppingCart className="h-[18px] w-[18px] text-muted-foreground" />
             </div>
             <div className="flex min-h-18 items-center justify-between rounded-md bg-secondary/75 p-3.5">
               <div>
-                <p className="text-xs text-muted-foreground">Active products</p>
-                <p className="mt-1 text-2xl font-semibold leading-none" data-numeric>{productsValue}</p>
-                <p className="mt-1.5 text-[11px] text-muted-foreground">Product records</p>
+                <p className="text-xs text-muted-foreground">Active customers</p>
+                <p className="mt-1 text-2xl font-semibold leading-none" data-numeric>{activeCustomers}</p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">Customer records</p>
               </div>
               <PackagePlus className="h-[18px] w-[18px] text-muted-foreground" />
             </div>
@@ -134,19 +112,17 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-[30px] font-semibold leading-none tracking-tight" data-numeric>{lowStockValue}</p>
-              <p className="mt-2 text-xs text-muted-foreground">{lowStockItems.length ? `${lowStockItems.length} item${lowStockItems.length === 1 ? " requires" : "s require"} attention` : "No items require attention"}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{lowStockItems.length ? `${lowStockItems.length} item${lowStockItems.length === 1 ? " requires" : "s require"} attention` : "No items require attention"} · {productsValue} active products</p>
             </div>
           </CardContent>
         </Card>
       </section>
 
       <section className="grid min-w-0 gap-4 lg:grid-cols-12">
-        <DashboardPanel
-          title="Recent Sales Orders"
-          columns={["Order", "Customer", "Status", "Amount"]}
-          emptyTitle="No sales orders yet."
-          className="lg:col-span-8"
-        />
+        <Card className="min-w-0 overflow-hidden lg:col-span-8">
+          <CardHeader className="border-b border-border-subtle px-4 py-3.5"><CardTitle className="text-[14px]">Recent Sales Orders</CardTitle></CardHeader>
+          <CardContent className="p-0"><Table><TableHeader><TableRow className="hover:bg-transparent"><TableHead>Order</TableHead><TableHead>Customer</TableHead><TableHead>Status</TableHead><TableHead>Amount</TableHead></TableRow></TableHeader><TableBody>{recentOrders.map((order) => <TableRow key={order.id} className="cursor-pointer" onClick={() => navigate("/app/sales")}><TableCell className="font-medium">SO-{String(order.id).padStart(5, "0")}</TableCell><TableCell>{customersQuery.data?.find((customer) => customer.id === order.customer_id)?.company_name ?? `Customer #${order.customer_id}`}</TableCell><TableCell>{formatOrderStatus(order.status)}</TableCell><TableCell data-numeric>₹{Number(order.total_amount).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</TableCell></TableRow>)}</TableBody></Table>{!ordersQuery.isLoading && recentOrders.length === 0 && <EmptyState title={ordersQuery.isError ? "Unable to load sales orders." : "No sales orders yet."} className="min-h-32" />}</CardContent>
+        </Card>
         <Card className="min-w-0 overflow-hidden lg:col-span-4">
           <CardHeader className="flex-row items-center justify-between border-b border-border-subtle px-4 py-3.5">
             <CardTitle className="text-[14px]">Low Stock</CardTitle>
@@ -171,12 +147,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <DashboardPanel
-          title="Outstanding Invoices"
-          columns={["Invoice", "Customer", "Outstanding"]}
-          emptyTitle="No outstanding invoices."
-          className="lg:col-span-8"
-        />
+        <Card className="min-w-0 overflow-hidden lg:col-span-8"><CardHeader className="border-b border-border-subtle px-4 py-3.5"><CardTitle className="text-[14px]">Outstanding Invoices</CardTitle></CardHeader><CardContent className="p-0"><Table><TableHeader><TableRow className="hover:bg-transparent"><TableHead>Invoice</TableHead><TableHead>Customer</TableHead><TableHead>Outstanding</TableHead></TableRow></TableHeader><TableBody>{(outstandingQuery.data ?? []).slice(0, 5).map((invoice) => <TableRow key={invoice.invoice_id} className="cursor-pointer" onClick={() => navigate("/app/invoices")}><TableCell className="font-medium">{invoice.invoice_number}</TableCell><TableCell>{invoice.company_name}</TableCell><TableCell data-numeric>₹{invoice.outstanding_amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</TableCell></TableRow>)}</TableBody></Table>{!outstandingQuery.isLoading && !(outstandingQuery.data ?? []).length && <EmptyState title={outstandingQuery.isError ? "Unable to load outstanding invoices." : "No outstanding invoices."} className="min-h-32" />}</CardContent></Card>
 
         <Card className="overflow-hidden lg:col-span-4">
           <CardHeader className="border-b border-border-subtle px-4 py-3.5">
@@ -187,20 +158,20 @@ export default function DashboardPage() {
               <PackagePlus className="h-4 w-4" />
               New Product
             </Button>
-            <Button variant="outline" className="h-9 justify-start border-border-subtle bg-secondary/65 text-xs text-muted-foreground disabled:opacity-75" disabled>
+            <Button variant="outline" className="h-9 justify-start border-border-subtle bg-secondary/65 text-xs" onClick={() => navigate("/app/customers") }>
               <UserPlus className="h-4 w-4" />
               New Customer
             </Button>
-            <Button variant="outline" className="h-9 justify-start border-border-subtle bg-secondary/65 text-xs text-muted-foreground disabled:opacity-75" disabled>
+            <Button variant="outline" className="h-9 justify-start border-border-subtle bg-secondary/65 text-xs" onClick={() => navigate("/app/sales") }>
               <ShoppingCart className="h-4 w-4" />
               Sales Order
             </Button>
-            <Button variant="outline" className="h-9 justify-start border-border-subtle bg-secondary/65 text-xs text-muted-foreground disabled:opacity-75" disabled>
+            <Button variant="outline" className="h-9 justify-start border-border-subtle bg-secondary/65 text-xs" onClick={() => navigate("/app/invoices") }>
               <CreditCard className="h-4 w-4" />
               Record Payment
             </Button>
             <p className="col-span-2 mt-1 text-[11px] leading-4 text-muted-foreground lg:col-span-1">
-              Actions become available as Phase 1 modules are connected.
+              Create records and record payments from the related invoice detail.
             </p>
           </CardContent>
         </Card>

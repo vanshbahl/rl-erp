@@ -6,6 +6,7 @@ from app.models.customer import Customer
 from app.models.product import Product
 from app.models.inventory import Inventory
 from app.models.inventory_transaction import InventoryTransaction
+from app.models.enums import InventoryTransactionType
 from app.schemas.order import OrderCreate, OrderStatusUpdate
 
 
@@ -207,7 +208,7 @@ class OrderService:
                     product_id=item.product_id,
                     order_id=order.id,
                     quantity_change=-item.quantity,
-                    transaction_type="ORDER_DISPATCH",
+                    transaction_type=InventoryTransactionType.ORDER_DISPATCH.value,
                     remarks=f"Order #{order.id} dispatched"
                 )
             )
@@ -240,7 +241,7 @@ class OrderService:
                     product_id=item.product_id,
                     order_id=order.id,
                     quantity_change=item.quantity,
-                    transaction_type="ORDER_CANCEL",
+                    transaction_type=InventoryTransactionType.ORDER_CANCEL.value,
                     remarks=f"Order #{order.id} cancelled"
                 )
             )

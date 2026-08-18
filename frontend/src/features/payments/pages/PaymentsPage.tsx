@@ -1,0 +1,11 @@
+import { useMemo } from "react"
+import { EmptyState } from "@/components/common/EmptyState"
+import { PageHeader } from "@/components/common/PageHeader"
+import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getApiErrorMessage } from "@/features/auth/api"
+import { useInvoicesQuery } from "@/features/invoices/hooks"
+import { usePaymentsQuery } from "@/features/payments/hooks"
+
+export default function PaymentsPage() { const paymentsQuery = usePaymentsQuery(); const invoicesQuery = useInvoicesQuery(); const invoiceMap = useMemo(() => new Map((invoicesQuery.data ?? []).map((invoice) => [invoice.id, invoice])), [invoicesQuery.data]); return <div className="space-y-5"><PageHeader title="Payments" description="Payment records are created from issued invoice details." /><Card className="overflow-hidden"><CardContent className="p-0">{paymentsQuery.isLoading ? <div className="space-y-2 p-4">{Array.from({ length: 5 }).map((_, index) => <Skeleton key={index} className="h-10 w-full" />)}</div> : paymentsQuery.isError ? <EmptyState title="Unable to load payments." description={getApiErrorMessage(paymentsQuery.error, "Check the API connection and try again.")} /> : !paymentsQuery.data?.length ? <EmptyState title="No payments yet." description="Record payments from issued invoice details." /> : <Table><TableHeader><TableRow><TableHead>Invoice</TableHead><TableHead>Date</TableHead><TableHead>Method</TableHead><TableHead>Reference</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader><TableBody>{paymentsQuery.data.map((payment) => <TableRow key={payment.id}><TableCell className="font-medium">{invoiceMap.get(payment.invoice_id)?.invoice_number ?? `Invoice #${payment.invoice_id}`}</TableCell><TableCell>{new Date(payment.payment_date).toLocaleDateString("en-IN")}</TableCell><TableCell>{payment.payment_method.replaceAll("_", " ")}</TableCell><TableCell>{payment.reference_number || "—"}</TableCell><TableCell data-numeric>₹{Number(payment.amount).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</TableCell></TableRow>)}</TableBody></Table>}</CardContent></Card></div> }

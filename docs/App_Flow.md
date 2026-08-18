@@ -35,7 +35,7 @@ flowchart TD
     G --> H[Log TRANSACTION: ORDER_DISPATCH]
     H --> I{Status: DISPATCHED}
     I -->|Mark Complete| J{Status: COMPLETED}
-    I -->|Cancel/Rollback| K[Restore Inventory & Log REVERSAL]
+    I -->|Cancel/Rollback| K[Restore Inventory & Log ORDER_CANCEL]
 ```
 
 ## 3. Production Workflow (BOM & Execution)

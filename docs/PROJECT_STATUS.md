@@ -12,16 +12,16 @@
 | Auth (Login/Register) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | User Management (RBAC) | ✅ | 🔴 | 🟡 | ✅ | 🟡 |
 | Products | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Customers | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
+| Customers | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Inventory | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Suppliers | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
-| Sales Orders | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
-| Invoices | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
-| Payments | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
+| Suppliers | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Sales Orders | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Invoices | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Payments | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Purchase Orders | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
 | BOM | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
 | Production Orders | ✅ | 🔴 | 🔴 | ✅ | 🟡 |
-| Dashboard | 🔴 | 🟡 | 🟡 | N/A | 🟡 |
+| Dashboard | 🔴 | ✅ | ✅ | N/A | ✅ |
 | Reports / Analytics | 🔴 | 🔴 | 🔴 | N/A | 🔴 |
 | Settings | 🔴 | 🔴 | 🔴 | N/A | 🔴 |
 
@@ -65,9 +65,9 @@ Auth via `HTTPBearer` JWT. RBAC via `require_roles()` / `require_admin()`.
 
 ### Sales Orders (`/orders`) — ✅ Complete
 - State machine: PENDING → PROCESSING → DISPATCHED → COMPLETED; CANCELLED from first three
-- Dispatching deducts inventory, writes ORDER_DISPATCH log
-- Cancelling DISPATCHED order restores inventory with ORDER_CANCEL log
-- Bug: ORDER_DISPATCH and ORDER_CANCEL are raw strings — not in InventoryTransactionType enum
+- Dispatching deducts inventory and writes an `ORDER_DISPATCH` ledger transaction
+- Cancelling a DISPATCHED order restores inventory and writes an `ORDER_CANCEL` ledger transaction
+- `ORDER_DISPATCH` and `ORDER_CANCEL` are valid `InventoryTransactionType` values
 
 ### Invoices (`/invoices`) — ✅ Complete (GST not applied)
 - `POST /invoices/generate/{order_id}` — from DISPATCHED or COMPLETED orders only
@@ -106,11 +106,11 @@ Auth via `HTTPBearer` JWT. RBAC via `require_roles()` / `require_admin()`.
 | Landing page (marketing) | `/` | ✅ Fully implemented |
 | Login / Access information | `/login`, `/register` | ✅ Responsive login and administrator-managed access guidance |
 | AppShell (sidebar + topbar) | `/app/*` | ✅ Responsive light-first ERP shell with command search, context bar, and disabled future navigation |
-| Dashboard page | `/app/dashboard` | 🟡 Asymmetric operational UI foundation with zero/empty states; backend data is not connected |
-| All ERP module pages | `/app/products` etc. | 🔴 Missing entirely |
+| Dashboard page | `/app/dashboard` | ✅ Live product, inventory, customer, order, receivable, and outstanding-invoice data |
+| Phase 1 modules | `/app/products`, `/app/inventory`, `/app/customers`, `/app/suppliers`, `/app/sales`, `/app/invoices`, `/app/payments` | ✅ Connected to real APIs |
 
 ### Future Navigation
-The shell shows the planned ERP hierarchy, but only Dashboard is currently navigable. Module entries remain disabled until their real Phase 1 routes and screens are implemented; the command palette does not expose dead routes.
+The shell exposes all implemented Phase 1 routes. Later-phase modules remain disabled; the command palette does not expose dead routes.
 
 ### Infrastructure Available (mostly unused)
 - Axios client with auth token injection, 401 auto-redirect
@@ -132,11 +132,13 @@ The shell shows the planned ERP hierarchy, but only Dashboard is currently navig
 - An optional local-only skip-login control calls the guarded backend endpoint and creates a normal administrator JWT session.
 - The authenticated user shape is `{id, username, email, role}` and AppShell displays username and role.
 
-### Products and Inventory Integration — ✅ Complete
+### Phase 1 Frontend Integration — ✅ Complete
 - `/app/products` provides real product listing, filtering, creation, editing, details, and soft deactivation.
 - `/app/inventory` provides real stock listing, low-stock filtering, and audited manual quantity/minimum-stock adjustment.
-- Dashboard active-product and low-stock metrics, plus the low-stock panel, use persisted API data.
-- Sales, customer, receivable, and invoice dashboard sections remain unconnected and do not display fabricated data.
+- `/app/customers` and `/app/suppliers` provide real master-data list, search, create, edit, details, and deactivation workflows.
+- `/app/sales` provides multi-line order creation, backend-valid status transitions, dispatch/cancel confirmation, and invoice generation.
+- `/app/invoices` provides invoice detail, issuance, and payment recording; `/app/payments` lists persisted payments.
+- Dashboard uses persisted product, low-stock, customer, order, outstanding-receivable, and outstanding-invoice APIs.
 
 ---
 
@@ -152,7 +154,6 @@ production_execution_items
 - Baseline migration is an empty `pass` — original schema created outside Alembic
 - 2 other migrations are also empty `pass` bodies
 - Functional migrations exist from BOM onwards (properly scripted)
-- `ORDER_DISPATCH` and `ORDER_CANCEL` transaction types written as raw strings — not in enum
 
 ---
 
@@ -160,13 +161,12 @@ production_execution_items
 
 | # | Severity | Issue |
 |---|---|---|
-| 1 | High | ORDER_DISPATCH/ORDER_CANCEL not in InventoryTransactionType enum |
-| 2 | High | GET /products/{id} returns inactive products; list endpoint does not |
-| 3 | Medium | N+1 queries in payment reports and PO list |
-| 4 | Medium | GST hardcoded to 0 despite gst_rate field on products |
-| 5 | Low | user_service.py is completely empty |
-| 6 | Low | No pagination on any list endpoint |
-| 7 | Low | datetime.utcnow() deprecated in Python 3.12+ |
+| 1 | High | GET /products/{id} returns inactive products; list endpoint does not |
+| 2 | Medium | N+1 queries in payment reports and PO list |
+| 3 | Medium | GST hardcoded to 0 despite gst_rate field on products |
+| 4 | Low | user_service.py is completely empty |
+| 5 | Low | No pagination on any list endpoint |
+| 6 | Low | datetime.utcnow() deprecated in Python 3.12+ |
 
 ---
 
@@ -177,10 +177,9 @@ production_execution_items
 | No pagination | All list endpoints return full tables |
 | No row-level locking | Race condition risk on concurrent inventory mutations |
 | GST not applied | Invoice tax always zero |
-| Enum inconsistency | ORDER_DISPATCH/ORDER_CANCEL raw strings |
 | Empty migrations | 3 no-op migration files |
 | N+1 queries | Payment reports, PO list |
-| Partial domain types in frontend | Product and Inventory types exist; remaining ERP modules are not typed |
+| Partial domain types in frontend | Phase 1 modules are typed; later ERP modules remain untyped |
 | No route guards | Unauthenticated access to /app/* |
 | Dead stubs | user_service.py, features/auth/index.ts, hooks/index.ts empty |
-| Command Palette partial | Dashboard, Products, Inventory, and logout are connected; future modules remain unavailable |
+| Command Palette partial | Dashboard, all Phase 1 routes, and logout are connected; later modules remain unavailable |

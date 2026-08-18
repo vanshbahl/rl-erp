@@ -56,10 +56,10 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: "Sales",
     items: [
-      { label: "Customers", icon: Users },
-      { label: "Sales Orders", icon: ShoppingCart },
-      { label: "Invoices", icon: Receipt },
-      { label: "Payments", icon: CreditCard },
+      { label: "Customers", icon: Users, path: "/app/customers" },
+      { label: "Sales Orders", icon: ShoppingCart, path: "/app/sales" },
+      { label: "Invoices", icon: Receipt, path: "/app/invoices" },
+      { label: "Payments", icon: CreditCard, path: "/app/payments" },
     ],
   },
   {
@@ -72,7 +72,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: "Procurement",
     items: [
-      { label: "Suppliers", icon: Truck },
+      { label: "Suppliers", icon: Truck, path: "/app/suppliers" },
       { label: "Purchase Orders", icon: ClipboardList },
     ],
   },
