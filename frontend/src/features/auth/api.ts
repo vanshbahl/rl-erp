@@ -7,10 +7,6 @@ export interface LoginCredentials {
   password: string
 }
 
-export interface RegisterPayload extends LoginCredentials {
-  username: string
-}
-
 interface LoginResponse {
   access_token: string
   token_type: string
@@ -22,8 +18,9 @@ export const authApi = {
     return data
   },
 
-  async register(payload: RegisterPayload): Promise<void> {
-    await api.post("/auth/register", payload)
+  async devLogin(): Promise<LoginResponse> {
+    const { data } = await api.post<LoginResponse>("/auth/dev-login")
+    return data
   },
 
   async getCurrentUser(token?: string): Promise<User> {

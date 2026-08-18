@@ -1,7 +1,4 @@
-import { useState, type FormEvent } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { toast } from "sonner"
-import { authApi, getApiErrorMessage } from "@/features/auth/api"
+import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -10,85 +7,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 export default function RegisterPage() {
-  const navigate = useNavigate()
-  const [username, setUsername] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setError(null)
-    setIsSubmitting(true)
-
-    try {
-      await authApi.register({ username, email, password })
-      toast.success("Account created. You can now sign in.")
-      navigate("/login", { replace: true })
-    } catch (requestError) {
-      setError(getApiErrorMessage(requestError, "Unable to create your account. Please try again."))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   return (
-    <div className="light flex min-h-screen items-center justify-center bg-background px-4 py-10 text-foreground">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Create your account</CardTitle>
-          <CardDescription>Set up your RL-ERP access credentials.</CardDescription>
+    <div className="light flex min-h-screen items-center justify-center bg-[#f7f7f5] px-4 py-10 text-[#171717]">
+      <Card className="w-full max-w-[420px] rounded-lg border-neutral-200 bg-white shadow-sm">
+        <CardHeader className="space-y-6 p-6 sm:p-8">
+          <div>
+            <p className="text-lg font-semibold tracking-tight">RL-ERP</p>
+            <p className="mt-1 text-sm text-neutral-500">Raman Laaminators</p>
+          </div>
+          <div className="space-y-2">
+            <CardTitle className="text-2xl text-neutral-950">Need access to RL-ERP?</CardTitle>
+            <CardDescription className="leading-6 text-neutral-600">
+              User accounts are managed by the administrator. Contact the administrator if you need access to the ERP.
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent>
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                autoComplete="username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button className="w-full" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating account..." : "Create account"}
-            </Button>
-          </form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link className="font-medium text-primary hover:underline" to="/login">
-              Sign in
-            </Link>
-          </p>
+        <CardContent className="px-6 pb-6 sm:px-8 sm:pb-8">
+          <Button className="w-full" asChild variant="outline">
+            <Link to="/login">Back to sign in</Link>
+          </Button>
         </CardContent>
       </Card>
     </div>

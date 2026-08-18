@@ -54,9 +54,8 @@ class TestSecurity:
         )
         assert response.status_code == 401
 
-    def test_role_escalation_attempt(self, client, db):
-        """Test that a user cannot escalate their role during registration"""
-        from app.models.user import User
+    def test_role_escalation_attempt(self, client):
+        """Public registration cannot be used to escalate privileges."""
         reg_payload = {
             "username": "hacker_user",
             "email": "hacker@example.com",
@@ -66,11 +65,7 @@ class TestSecurity:
         
         response = client.post("/auth/register", json=reg_payload)
         
-        # If it returns 200, verify the user was created as STAFF
-        if response.status_code == 200:
-            user_id = response.json()["id"]
-            user = db.query(User).filter(User.id == user_id).first()
-            assert user.role == "staff"
+        assert response.status_code in (401, 403)
             
     def test_sql_injection_attempts(self, client, admin_headers):
         """Test endpoints against SQL injection payloads"""

@@ -31,10 +31,14 @@ Welcome to the RL-ERP development team. This guide covers local setup, workflows
    DATABASE_URL=postgresql://postgres:password@localhost/rlerp
    TEST_DATABASE_URL=postgresql://postgres:password@localhost/rlerp_test
    SECRET_KEY=generate_a_secure_random_string
-   ALGORITHM=HS256
-   ACCESS_TOKEN_EXPIRE_MINUTES=1440
+   APP_ENV=development
    FRONTEND_ORIGINS=http://localhost:5173
+   DEFAULT_ADMIN_USERNAME=admin
+   DEFAULT_ADMIN_EMAIL=admin@example.com
+   DEFAULT_ADMIN_PASSWORD=change-me
+   DEV_AUTH_BYPASS=false
    ```
+   Copy values from `backend/.env.example`. Keep `.env` ignored and never commit real credentials. The bootstrap creates or promotes the configured administrator but does not reset an existing password on restart.
 5. **Database Initialization:**
    Ensure your local PostgreSQL server is running and the `rlerp` database exists.
    ```bash
@@ -56,7 +60,7 @@ Welcome to the RL-ERP development team. This guide covers local setup, workflows
    npm install
    ```
 3. **Environment Variables:**
-   Copy `.env.example` to `.env` (ensure `VITE_API_URL=http://localhost:8000`). The frontend uses this root URL directly; it does not add an API version prefix.
+   Copy `.env.example` to `.env` (ensure `VITE_API_URL=http://localhost:8000`). The frontend uses this root URL directly; it does not add an API version prefix. `VITE_DEV_AUTH_BYPASS` defaults to `false`; enable it only for local development together with the guarded backend flags.
 4. **Run the development server:**
    ```bash
    npm run dev
@@ -120,5 +124,7 @@ Welcome to the RL-ERP development team. This guide covers local setup, workflows
 ## 6. Debugging & Troubleshooting
 - **Database Schema Sync Issues:** If you get `relation does not exist` errors, your database is out of sync. Run `alembic upgrade head`. If a migration was messed up locally, you may need to recreate the local DB and rerun migrations.
 - **JWT Errors:** If you get `401 Unauthorized` constantly, check your `.env` file to ensure `SECRET_KEY` is set properly and the token hasn't expired.
+- **Admin Bootstrap:** All three `DEFAULT_ADMIN_*` values are required for bootstrap. Existing matching administrators are left unchanged; matching staff/manager users are promoted without changing their password.
+- **Development Login Safety:** The bypass requires `APP_ENV=development`, `DEV_AUTH_BYPASS=true`, Vite development mode, and `VITE_DEV_AUTH_BYPASS=true`. Never enable the backend bypass in production.
 - **Frontend CORS Errors:** Ensure the frontend origin is included in the backend `FRONTEND_ORIGINS` setting (comma-separated for multiple origins).
 - **Frontend API 404s:** Verify `VITE_API_URL` is the backend root URL, such as `http://localhost:8000`, without `/api/v1`.

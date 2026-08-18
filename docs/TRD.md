@@ -90,6 +90,9 @@ The API follows RESTful conventions.
   2. Server verifies against Bcrypt hash and issues a short-lived `access_token`.
   3. Client stores token securely and attaches it as a Bearer token in the `Authorization` header for subsequent requests.
 - **Authorization (RBAC):** Roles (`admin`, `manager`, `staff`) are embedded in the database user model. Dependencies like `require_roles(["admin", "manager"])` intercept requests before they hit the route handler, rejecting unauthorized access with a `403 Forbidden`.
+- **Primary Admin Bootstrap:** During application startup, the service reads `DEFAULT_ADMIN_USERNAME`, `DEFAULT_ADMIN_EMAIL`, and `DEFAULT_ADMIN_PASSWORD`. It creates the configured administrator once or promotes a matching existing user; subsequent startups never replace an existing password hash.
+- **Account Provisioning:** Public self-registration is disabled. `POST /auth/register` is retained for authenticated administrator-managed staff creation.
+- **Development Login:** `POST /auth/dev-login` issues a normal administrator JWT only when `APP_ENV=development` and `DEV_AUTH_BYPASS=true`. Disabled or non-development environments return `404`. The frontend additionally requires Vite development mode and `VITE_DEV_AUTH_BYPASS=true` before showing the control.
 
 ## 6. Database Architecture
 The PostgreSQL database prioritizes strict relational integrity:
@@ -116,5 +119,5 @@ The PostgreSQL database prioritizes strict relational integrity:
 - **Database Indexes:** Applied explicitly to highly-queried foreign keys (e.g., `customer_id` on orders, `product_id` on inventory) to speed up joins.
 - **Statelessness:** The backend holds no session state. It scales horizontally seamlessly by deploying multiple instances behind a load balancer, provided they point to the same PostgreSQL cluster.
 - **Concurrency:** Critical inventory mutations (dispatch, production execution) have a known race condition risk. Row-level database locks (`SELECT ... FOR UPDATE`) are not yet implemented. This is a P3 priority.
-- **CORS:** The backend does not currently configure CORS middleware. This must be added before the frontend can make any cross-origin API requests. This is a P0 blocker.
-- **API Versioning:** The backend serves all routes at the root path (no `/api/v1` prefix). The frontend Axios client is configured to use `/api/v1`. These must be aligned as a P0 fix.
+- **CORS:** Allowed frontend origins are configured through `FRONTEND_ORIGINS`; credentials are never combined with a wildcard origin.
+- **API Versioning:** The backend currently serves routes at the root path and the frontend uses the configured backend root URL without adding `/api/v1`.

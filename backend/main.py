@@ -1,8 +1,16 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.database import Base
-from app.core.config import FRONTEND_ORIGINS
+from app.core.database import Base, SessionLocal
+from app.core.config import (
+    DEFAULT_ADMIN_EMAIL,
+    DEFAULT_ADMIN_PASSWORD,
+    DEFAULT_ADMIN_USERNAME,
+    FRONTEND_ORIGINS,
+)
+from app.services.user_service import bootstrap_default_admin
 
 import app.models
 
@@ -20,7 +28,23 @@ from app.routes import purchase_order
 from app.routes.bom import router as bom_router
 from app.routes.production_order import router as production_order_router
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    db = SessionLocal()
+    try:
+        bootstrap_default_admin(
+            db,
+            username=DEFAULT_ADMIN_USERNAME,
+            email=DEFAULT_ADMIN_EMAIL,
+            password=DEFAULT_ADMIN_PASSWORD,
+        )
+    finally:
+        db.close()
+
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

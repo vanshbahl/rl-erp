@@ -24,8 +24,10 @@ Small and medium manufacturing businesses struggle with disjointed operational d
 
 ## 6. User Roles
 - **Admin:** Full platform access, user management, and system overrides (e.g., forced rollbacks, inventory initialization).
-- **Manager:** Operational management, production scheduling, inventory planning, and reporting access.
+- **Manager:** Reserved for future operational management, production scheduling, inventory planning, and reporting workflows. The role remains supported even though no manager-specific UI is currently implemented.
 - **Staff:** View-level access, performing daily execution tasks like stock adjustments, order dispatch, and recording production yields.
+
+The primary operational account is an administrator. Standard accounts are created as staff by an administrator; public self-registration is not supported.
 
 ## 7. Functional Requirements
 
@@ -63,6 +65,12 @@ Small and medium manufacturing businesses struggle with disjointed operational d
 - Track invoice payment status (`DRAFT`, `ISSUED`, `PARTIALLY_PAID`, `PAID`).
 - Generate aging reports for overdue invoices.
 
+### 7.8 Authentication & Account Access
+- Bootstrap one primary administrator from backend environment configuration.
+- Restrict account creation to authenticated administrators.
+- Authenticate users with email/password and issue normal JWT sessions.
+- Permit an explicitly enabled development-only login shortcut that still issues a real administrator JWT and remains unavailable outside development.
+
 ## 8. Business Rules
 1. **No Negative Inventory:** The system must block any action (dispatch, production) that would drive stock levels below zero.
 2. **Immutable History:** Financial records, production executions, and order dispatches must write immutable logs. Modifications must be handled via explicit rollbacks or reversals.
@@ -83,20 +91,20 @@ Small and medium manufacturing businesses struggle with disjointed operational d
 - ✅ Invoice Generation (from dispatched orders)
 - ✅ Payments Engine (multi-method, AR aging reports)
 - ✅ Authentication (JWT/bcrypt) & RBAC (admin/manager/staff)
+- ✅ Environment-backed primary administrator bootstrap
 - ✅ User Management (admin-only CRUD, role assignment)
 
 ### Frontend (In Progress)
 - ✅ Marketing Landing Page
 - 🟡 App Shell (sidebar navigation — no module pages wired)
 - 🟡 Dashboard (static placeholder — no live data)
-- 🔴 Login / Register Pages
+- ✅ Login / Administrator-managed access Pages
 - 🔴 All ERP Module Pages (Products, Orders, Inventory, etc.)
 
 ### Known Gaps (Backend)
 - ⚠️ GST/tax calculation not applied — invoice tax always 0
 - ⚠️ Manual inventory adjustment has no audit trail
 - ⚠️ No pagination on any list endpoint
-- ⚠️ No CORS middleware (blocks all frontend requests)
 
 ## 10. Future Roadmap
 - Production Costing (Actual vs Standard cost variance).

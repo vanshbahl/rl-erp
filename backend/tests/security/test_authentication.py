@@ -29,13 +29,22 @@ from app.models.user import User
 @pytest.mark.security
 class TestAuthenticationEndpoints:
 
-    def test_register_success(self, client, db):
+    def test_public_register_is_unavailable(self, client):
+        response = client.post("/auth/register", json={
+            "username": "publicuser",
+            "email": "publicuser@test.com",
+            "password": "securepassword123",
+        })
+
+        assert response.status_code in (401, 403)
+
+    def test_admin_can_register_staff_user(self, client, db, admin_headers):
         payload = {
             "username": "newuser",
             "email": "newuser@test.com",
             "password": "securepassword123"
         }
-        response = client.post("/auth/register", json=payload)
+        response = client.post("/auth/register", json=payload, headers=admin_headers)
         
         assert response.status_code == 200
         data = response.json()
@@ -48,13 +57,13 @@ class TestAuthenticationEndpoints:
         assert user is not None
         assert verify_password("securepassword123", user.hashed_password)
 
-    def test_register_duplicate_email(self, client, staff_user):
+    def test_register_duplicate_email(self, client, staff_user, admin_headers):
         payload = {
             "username": "duplicate",
             "email": staff_user.email,  # Already exists
             "password": "securepassword123"
         }
-        response = client.post("/auth/register", json=payload)
+        response = client.post("/auth/register", json=payload, headers=admin_headers)
         
         assert response.status_code == 400
         assert "already registered" in response.json()["detail"].lower()
@@ -90,6 +99,47 @@ class TestAuthenticationEndpoints:
         
         assert response.status_code == 401
         assert "invalid credentials" in response.json()["detail"].lower()
+
+    def test_dev_login_returns_real_admin_token(
+        self,
+        client,
+        admin_user,
+        monkeypatch,
+    ):
+        monkeypatch.setattr("app.routes.auth.APP_ENV", "development")
+        monkeypatch.setattr("app.routes.auth.DEV_AUTH_BYPASS", True)
+        monkeypatch.setattr(
+            "app.routes.auth.DEFAULT_ADMIN_USERNAME",
+            admin_user.username,
+        )
+
+        response = client.post("/auth/dev-login")
+
+        assert response.status_code == 200
+        token = response.json()["access_token"]
+        me_response = client.get(
+            "/users/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert me_response.status_code == 200
+        assert me_response.json()["username"] == admin_user.username
+        assert me_response.json()["role"] == UserRole.ADMIN.value
+
+    def test_dev_login_is_unavailable_when_disabled(self, client, monkeypatch):
+        monkeypatch.setattr("app.routes.auth.APP_ENV", "development")
+        monkeypatch.setattr("app.routes.auth.DEV_AUTH_BYPASS", False)
+
+        response = client.post("/auth/dev-login")
+
+        assert response.status_code == 404
+
+    def test_dev_login_is_unavailable_outside_development(self, client, monkeypatch):
+        monkeypatch.setattr("app.routes.auth.APP_ENV", "production")
+        monkeypatch.setattr("app.routes.auth.DEV_AUTH_BYPASS", True)
+
+        response = client.post("/auth/dev-login")
+
+        assert response.status_code == 404
 
 
 @pytest.mark.security

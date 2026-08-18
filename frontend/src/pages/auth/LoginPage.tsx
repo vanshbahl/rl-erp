@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
+import { Eye, EyeOff } from "lucide-react"
 import { authApi, getApiErrorMessage } from "@/features/auth/api"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,8 +20,17 @@ export default function LoginPage() {
   const login = useAuthStore((state) => state.login)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const devBypassEnabled =
+    import.meta.env.DEV && import.meta.env.VITE_DEV_AUTH_BYPASS === "true"
+
+  const completeLogin = async (accessToken: string) => {
+    const user = await authApi.getCurrentUser(accessToken)
+    login(user, accessToken)
+    navigate("/app/dashboard", { replace: true })
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -29,10 +39,8 @@ export default function LoginPage() {
 
     try {
       const { access_token } = await authApi.login({ email, password })
-      const user = await authApi.getCurrentUser(access_token)
-      login(user, access_token)
+      await completeLogin(access_token)
       toast.success("Signed in successfully")
-      navigate("/app/dashboard", { replace: true })
     } catch (requestError) {
       setError(getApiErrorMessage(requestError, "Unable to sign in. Please try again."))
     } finally {
@@ -40,18 +48,42 @@ export default function LoginPage() {
     }
   }
 
+  const handleDevLogin = async () => {
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      const { access_token } = await authApi.devLogin()
+      await completeLogin(access_token)
+      toast.success("Development session started")
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "Development login is unavailable."))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
-    <div className="light flex min-h-screen items-center justify-center bg-background px-4 py-10 text-foreground">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome back</CardTitle>
-          <CardDescription>Sign in to access your RL-ERP workspace.</CardDescription>
+    <div className="light flex min-h-screen items-center justify-center bg-[#f7f7f5] px-4 py-10 text-[#171717]">
+      <Card className="w-full max-w-[420px] rounded-lg border-neutral-200 bg-white shadow-sm">
+        <CardHeader className="space-y-6 p-6 sm:p-8">
+          <div>
+            <p className="text-lg font-semibold tracking-tight">RL-ERP</p>
+            <p className="mt-1 text-sm text-neutral-500">Raman Laaminators</p>
+          </div>
+          <div className="space-y-2">
+            <CardTitle className="text-2xl text-neutral-950">Welcome back</CardTitle>
+            <CardDescription className="text-neutral-600">
+              Sign in to access your ERP workspace.
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6 pb-6 sm:px-8 sm:pb-8">
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label className="text-neutral-800" htmlFor="email">Email</Label>
               <Input
+                className="border-neutral-300 bg-white text-neutral-950"
                 id="email"
                 type="email"
                 autoComplete="email"
@@ -61,27 +93,57 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
+              <Label className="text-neutral-800" htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  className="border-neutral-300 bg-white pr-11 text-neutral-950"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-neutral-500 hover:text-neutral-800"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button className="w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Need an account?{" "}
+          <div className="mt-5 flex flex-col items-center gap-3 text-sm text-neutral-600">
+            <button
+              type="button"
+              className="hover:text-neutral-950 hover:underline"
+              onClick={() => toast.info("Password recovery is not configured yet. Contact the system administrator.")}
+            >
+              Forgot password?
+            </button>
             <Link className="font-medium text-primary hover:underline" to="/register">
-              Register
+              Need access? Contact administrator
             </Link>
-          </p>
+          </div>
+          {devBypassEnabled && (
+            <div className="mt-6 border-t border-neutral-200 pt-5">
+              <Button
+                className="w-full border-neutral-300 text-neutral-700"
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={handleDevLogin}
+              >
+                Developer: Skip login
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

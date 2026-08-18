@@ -35,9 +35,12 @@ All backend modules follow: FastAPI router → Service layer → SQLAlchemy mode
 Auth via `HTTPBearer` JWT. RBAC via `require_roles()` / `require_admin()`.
 
 ### Auth (`/auth`) — ✅ Complete
-- `POST /auth/register` — creates users (default role: `staff`)
+- Startup bootstraps or promotes the environment-configured primary administrator without resetting an existing password
+- `POST /auth/register` — authenticated admin-managed staff creation; public self-registration is unavailable
 - `POST /auth/login` — verifies bcrypt hash, returns JWT bearer token
-- `GET /users/me` — returns `{id, username, email}` (no `role` or `full_name`)
+- `POST /auth/dev-login` — development-only real JWT login, guarded by backend environment and feature flags
+- `GET /users/me` — returns `{id, username, email, role}`
+- Roles remain `admin`, `manager`, and `staff`; no manager-specific UI is implemented yet
 
 ### Admin (`/admin`) — ✅ Complete
 - `GET /admin/users`, `GET /admin/users/{id}`, `PUT /admin/users/{id}/role`, `DELETE /admin/users/{id}`
@@ -101,7 +104,7 @@ Auth via `HTTPBearer` JWT. RBAC via `require_roles()` / `require_admin()`.
 | Component | Path | Status |
 |---|---|---|
 | Landing page (marketing) | `/` | ✅ Fully implemented |
-| Login / Register | `/login`, `/register` | ✅ API-connected, responsive auth forms |
+| Login / Access information | `/login`, `/register` | ✅ Responsive login and administrator-managed access guidance |
 | AppShell (sidebar + topbar) | `/app/*` | ✅ UI shell exists (no data) |
 | Dashboard page | `/app/dashboard` | 🟡 Static placeholder, hardcoded zeros |
 | All ERP module pages | `/app/products` etc. | 🔴 Missing entirely |
@@ -127,7 +130,8 @@ These sidebar links are defined but have no corresponding routes or pages:
 ### Authentication Integration — ✅ Complete
 - Axios uses the configured backend root URL and injects persisted bearer tokens.
 - FastAPI CORS allows configured frontend origins (default: `http://localhost:5173`).
-- Login, registration, session restoration via `/users/me`, protected `/app/*` routes, and centralized 401 cleanup are implemented.
+- Login, administrator-managed account creation, session restoration via `/users/me`, protected `/app/*` routes, and centralized 401 cleanup are implemented.
+- An optional local-only skip-login control calls the guarded backend endpoint and creates a normal administrator JWT session.
 - The authenticated user shape is `{id, username, email, role}` and AppShell displays username and role.
 
 All non-auth ERP endpoints remain without connected frontend UI.

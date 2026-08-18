@@ -18,6 +18,11 @@ from fastapi.testclient import TestClient
 # Set the test database URL BEFORE any application modules are imported
 # so config.py / database.py pick up the test DSN.
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
+os.environ["APP_ENV"] = "testing"
+os.environ["DEV_AUTH_BYPASS"] = "false"
+os.environ["DEFAULT_ADMIN_USERNAME"] = ""
+os.environ["DEFAULT_ADMIN_EMAIL"] = ""
+os.environ["DEFAULT_ADMIN_PASSWORD"] = ""
 os.environ["DATABASE_URL"] = os.environ.get(
     "TEST_DATABASE_URL", "postgresql://localhost/rlerp_test"
 )
